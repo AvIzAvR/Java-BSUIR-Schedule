@@ -2,13 +2,14 @@ package com.java.labs.JavaLab.json;
 
 import com.java.labs.JavaLab.model.Schedule;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ScheduleParser {
 
-    public static List<Schedule> parseScheduleForDay(JSONObject scheduleJson, String dayOfWeek) {
+    public static List<Schedule> parseScheduleForDay(JSONObject scheduleJson, String dayOfWeek) throws JSONException {
         List<Schedule> schedulesForDay = new ArrayList<>();
 
         // Получаем расписание для указанного дня недели из JSON объекта
@@ -27,7 +28,7 @@ public class ScheduleParser {
         return schedulesForDay;
     }
 
-    private static Schedule parseScheduleItem(JSONObject lessonJson) {
+    private static Schedule parseScheduleItem(JSONObject lessonJson) throws JSONException {
         // Извлекаем нужные поля из JSON объекта
         String subject = lessonJson.getString("subjectFullName");
         String lessonType = lessonJson.getString("lessonTypeAbbrev");

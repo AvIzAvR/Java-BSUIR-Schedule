@@ -1,6 +1,7 @@
 package com.java.labs.JavaLab.service;
 
 import com.java.labs.JavaLab.model.Schedule;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -15,7 +16,7 @@ import org.json.JSONArray;
 @Service
 public class ScheduleService {
 
-    public List<Schedule> getScheduleByGroupDayWeekAndSubgroup(String groupNumber, String dayOfWeek, int weekNumber, int numSubgroup) {
+    public List<Schedule> getScheduleByGroupDayWeekAndSubgroup(String groupNumber, String dayOfWeek, int weekNumber, int numSubgroup) throws JSONException {
         String url = "https://iis.bsuir.by/api/v1/schedule?studentGroup=" + groupNumber;
         RestTemplate restTemplate = new RestTemplate();
         String jsonResponse = restTemplate.getForObject(url, String.class);

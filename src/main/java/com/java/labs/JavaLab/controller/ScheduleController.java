@@ -2,6 +2,7 @@ package com.java.labs.JavaLab.controller;
 
 import com.java.labs.JavaLab.model.Schedule;
 import com.java.labs.JavaLab.service.ScheduleService;
+import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +29,7 @@ public class ScheduleController {
             @PathVariable String groupNumber,
             @PathVariable String dayOfWeek,
             @PathVariable int weekNumber,
-            @PathVariable int numSubgroup) {
+            @PathVariable int numSubgroup) throws JSONException {
 
         List<Schedule> scheduleList = scheduleService.getScheduleByGroupDayWeekAndSubgroup(groupNumber, dayOfWeek, weekNumber, numSubgroup);
         return new ResponseEntity<>(scheduleList, HttpStatus.OK);
