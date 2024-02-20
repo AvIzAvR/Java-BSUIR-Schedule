@@ -16,14 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/schedule")
 public class ScheduleController {
-
     private final ScheduleService scheduleService;
-
     @Autowired
     public ScheduleController(ScheduleService scheduleService) {
         this.scheduleService = scheduleService;
     }
-
     @GetMapping("/{groupNumber}/{dayOfWeek}/{weekNumber}/{numSubgroup}")
     public ResponseEntity<List<Schedule>> getScheduleForDayOfWeek(
             @PathVariable String groupNumber,

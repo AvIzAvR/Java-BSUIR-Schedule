@@ -1,12 +1,6 @@
 package com.java.labs.JavaLab.model;
 
-import jakarta.persistence.*;
-
-@Entity
-@Table(name = "Schedule")
 public class Schedule {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String subject;
     private String lessonType;
