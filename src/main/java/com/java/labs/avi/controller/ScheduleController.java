@@ -21,12 +21,12 @@ public class ScheduleController {
     public ScheduleController(ScheduleService scheduleService) {
         this.scheduleService = scheduleService;
     }
-    @GetMapping("/{groupNumber}/{dayOfWeek}/{weekNumber}/{numSubgroup}")
+    @GetMapping
     public ResponseEntity<List<Schedule>> getScheduleForDayOfWeek(
-            @PathVariable String groupNumber,
-            @PathVariable String dayOfWeek,
-            @PathVariable int weekNumber,
-            @PathVariable int numSubgroup) throws JSONException {
+            @RequestParam String groupNumber,
+            @RequestParam String dayOfWeek,
+            @RequestParam int weekNumber,
+            @RequestParam int numSubgroup) throws JSONException {
 
         List<Schedule> scheduleList = scheduleService.getScheduleByGroupDayWeekAndSubgroup(groupNumber, dayOfWeek, weekNumber, numSubgroup);
         return new ResponseEntity<>(scheduleList, HttpStatus.OK);
