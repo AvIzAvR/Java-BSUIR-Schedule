@@ -14,6 +14,7 @@ target/
 .sts4-cache
 .mvn
 out
+test
 
 ### IntelliJ IDEA ###
 .idea
