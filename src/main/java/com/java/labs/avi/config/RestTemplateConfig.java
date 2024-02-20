@@ -1,4 +1,4 @@
-package com.java.labs.JavaLab.config;
+package com.java.labs.avi.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

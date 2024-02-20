@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.java.labs</groupId>
-	<artifactId>JavaLab</artifactId>
+	<artifactId>avi</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>JavaLab</name>
 	<description>Demo project for Spring Boot</description>

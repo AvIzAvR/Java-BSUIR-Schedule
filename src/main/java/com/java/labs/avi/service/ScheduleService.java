@@ -1,6 +1,6 @@
-package com.java.labs.JavaLab.service;
+package com.java.labs.avi.service;
 
-import com.java.labs.JavaLab.model.Schedule;
+import com.java.labs.avi.model.Schedule;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;

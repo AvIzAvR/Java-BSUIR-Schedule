@@ -1,7 +1,7 @@
-package com.java.labs.JavaLab.controller;
+package com.java.labs.avi.controller;
 
-import com.java.labs.JavaLab.model.Schedule;
-import com.java.labs.JavaLab.service.ScheduleService;
+import com.java.labs.avi.model.Schedule;
+import com.java.labs.avi.service.ScheduleService;
 import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

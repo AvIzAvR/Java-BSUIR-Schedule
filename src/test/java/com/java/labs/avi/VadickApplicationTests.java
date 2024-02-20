@@ -1,4 +1,4 @@
-package com.java.labs.JavaLab;
+package com.java.labs.avi;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

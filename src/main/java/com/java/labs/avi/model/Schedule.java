@@ -1,4 +1,4 @@
-package com.java.labs.JavaLab.model;
+package com.java.labs.avi.model;
 
 public class Schedule {
     private Long id;

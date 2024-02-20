@@ -6,12 +6,12 @@ This project is designed to manage and retrieve schedules for students, focusing
 
 The project is organized into several key packages, each serving a specific purpose within the application:
 
-- **com.java.labs.JavaLab.config:** Contains configuration classes, including `RestTemplateConfig` for setting up `RestTemplate`.
-- **com.java.labs.JavaLab.controller:** Houses the `ScheduleController`, which manages API endpoints for retrieving schedule information.
-- **com.java.labs.JavaLab.json:** Includes `ScheduleParser` for parsing schedule data fetched from external APIs.
-- **com.java.labs.JavaLab.model:** Contains the `Schedule` model representing the schedule information.
-- **com.java.labs.JavaLab.service:** Comprises `ScheduleService` that contains the logic to fetch and process schedule data.
-- **com.java.labs.JavaLab:** Contains the `JavaLabApplication`, the entry point of the Spring Boot application.
+- **com.java.labs.avi.config:** Contains configuration classes, including `RestTemplateConfig` for setting up `RestTemplate`.
+- **com.java.labs.avi.controller:** Houses the `ScheduleController`, which manages API endpoints for retrieving schedule information.
+- **com.java.labs.avi.json:** Includes `ScheduleParser` for parsing schedule data fetched from external APIs.
+- **com.java.labs.avi.model:** Contains the `Schedule` model representing the schedule information.
+- **com.java.labs.avi.service:** Comprises `ScheduleService` that contains the logic to fetch and process schedule data.
+- **com.java.labs.avi:** Contains the `JavaLabApplication`, the entry point of the Spring Boot application.
 
 ## Dependencies
 
