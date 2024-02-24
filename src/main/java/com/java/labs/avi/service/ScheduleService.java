@@ -1,17 +1,14 @@
 package com.java.labs.avi.service;
 
 import com.java.labs.avi.model.Schedule;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
-import java.util.List;
-
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
-
-import org.json.JSONArray;
-
+import java.util.List;
 
 @Service
 public class ScheduleService {
@@ -27,20 +24,27 @@ public class ScheduleService {
         for (int i = 0; i < schedules.length(); i++) {
             JSONObject scheduleJson = schedules.getJSONObject(i);
             JSONArray weekNumbers = scheduleJson.getJSONArray("weekNumber");
-            if (weekNumbers.toList().contains(weekNumber) && scheduleJson.getInt("numSubgroup") == numSubgroup) {
-                Schedule schedule = new Schedule();
-                schedule.setSubject(scheduleJson.getString("subjectFullName"));
-                schedule.setLessonType(scheduleJson.getString("lessonTypeAbbrev"));
-                schedule.setAuditory(scheduleJson.getJSONArray("auditories").getString(0));
-                JSONObject instructorJson = scheduleJson.getJSONArray("employees").getJSONObject(0);
-                String instructor = instructorJson.getString("firstName") + " " +
-                        instructorJson.getString("middleName") + " " +
-                        instructorJson.getString("lastName");
-                schedule.setInstructor(instructor);
-                schedule.setNumSubgroup(numSubgroup);
+            boolean isWeekMatched = weekNumbers.toList().contains(weekNumber);
+            int scheduleSubgroup = scheduleJson.getInt("numSubgroup");
+            if (isWeekMatched && (numSubgroup == 0 || scheduleSubgroup == numSubgroup)) {
+                Schedule schedule = parseSchedule(scheduleJson);
                 scheduleList.add(schedule);
             }
         }
         return scheduleList;
+    }
+
+    private Schedule parseSchedule(JSONObject scheduleJson) throws JSONException {
+        Schedule schedule = new Schedule();
+        schedule.setSubject(scheduleJson.getString("subjectFullName"));
+        schedule.setLessonType(scheduleJson.getString("lessonTypeAbbrev"));
+        schedule.setAuditory(scheduleJson.getJSONArray("auditories").getString(0));
+        JSONObject instructorJson = scheduleJson.getJSONArray("employees").getJSONObject(0);
+        String instructor = instructorJson.getString("firstName") + " " +
+                instructorJson.optString("middleName", "") + " " +
+                instructorJson.getString("lastName");
+        schedule.setNumSubgroup(scheduleJson.getInt("numSubgroup"));
+
+        return schedule;
     }
 }
