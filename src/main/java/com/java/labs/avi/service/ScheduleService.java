@@ -39,10 +39,16 @@ public class ScheduleService {
         schedule.setSubject(scheduleJson.getString("subjectFullName"));
         schedule.setLessonType(scheduleJson.getString("lessonTypeAbbrev"));
         schedule.setAuditory(scheduleJson.getJSONArray("auditories").getString(0));
-        JSONObject instructorJson = scheduleJson.getJSONArray("employees").getJSONObject(0);
-        String instructor = instructorJson.getString("firstName") + " " +
-                instructorJson.optString("middleName", "") + " " +
-                instructorJson.getString("lastName");
+        if (scheduleJson.getJSONArray("employees").length() > 0) {
+            JSONObject instructorJson = scheduleJson.getJSONArray("employees").getJSONObject(0);
+            String instructor = instructorJson.getString("firstName") + " " +
+                    instructorJson.optString("middleName", "") + " " +
+                    instructorJson.getString("lastName");
+            schedule.setInstructor(instructor.trim());
+        } else {
+            schedule.setInstructor("Не указан");
+        }
+
         schedule.setNumSubgroup(scheduleJson.getInt("numSubgroup"));
 
         return schedule;
