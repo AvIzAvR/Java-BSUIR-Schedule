@@ -36,21 +36,34 @@ public class ScheduleService {
 
     private Schedule parseSchedule(JSONObject scheduleJson) throws JSONException {
         Schedule schedule = new Schedule();
-        schedule.setSubject(scheduleJson.getString("subjectFullName"));
-        schedule.setLessonType(scheduleJson.getString("lessonTypeAbbrev"));
-        schedule.setAuditory(scheduleJson.getJSONArray("auditories").getString(0));
-        if (scheduleJson.getJSONArray("employees").length() > 0) {
-            JSONObject instructorJson = scheduleJson.getJSONArray("employees").getJSONObject(0);
-            String instructor = instructorJson.getString("firstName") + " " +
-                    instructorJson.optString("middleName", "") + " " +
-                    instructorJson.getString("lastName");
-            schedule.setInstructor(instructor.trim());
+        schedule.setSubject(scheduleJson.optString("subjectFullName", "не указано"));
+        schedule.setLessonType(scheduleJson.optString("lessonTypeAbbrev", "не указано"));
+
+        JSONArray auditories = scheduleJson.optJSONArray("auditories");
+        if (auditories != null && !auditories.isEmpty()) {
+            schedule.setAuditory(auditories.getString(0));
         } else {
-            schedule.setInstructor("Не указан");
+            schedule.setAuditory("не указано");
         }
 
-        schedule.setNumSubgroup(scheduleJson.getInt("numSubgroup"));
+        JSONArray employees = scheduleJson.optJSONArray("employees");
+        if (employees != null && !employees.isEmpty()) {
+            JSONObject instructorJson = employees.getJSONObject(0);
+            String instructor = instructorJson.optString("firstName", "") + " " +
+                    instructorJson.optString("middleName", "") + " " +
+                    instructorJson.optString("lastName", "");
+            schedule.setInstructor(instructor.trim());
+        } else {
+            schedule.setInstructor("не указано");
+        }
+
+        if (scheduleJson.has("numSubgroup")) {
+            schedule.setNumSubgroup(scheduleJson.optInt("numSubgroup", 0));
+        } else {
+            schedule.setNumSubgroup(0);
+        }
 
         return schedule;
     }
+
 }
