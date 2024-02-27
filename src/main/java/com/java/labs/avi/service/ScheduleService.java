@@ -13,14 +13,20 @@ import java.util.List;
 
 @Service
 public class ScheduleService {
-
-    @Autowired
-    private ScheduleRepository scheduleRepository;
-
+    private final ScheduleRepository scheduleRepository;
+    public ScheduleService(ScheduleRepository scheduleRepository) {
+        this.scheduleRepository = scheduleRepository;
+    }
     private static final String DEFAULT_VALUE = "не указано";
     private static final String NUM_SUBGROUP = "numSubgroup";
 
     public List<Schedule> getScheduleByGroupDayWeekAndSubgroup(String groupNumber, String dayOfWeek, int weekNumber, int numSubgroup) throws JSONException {
+        if (weekNumber > 4 || weekNumber < 1) {
+            throw new IllegalArgumentException("Неделя не может быть больше 4!");
+        }
+        if (numSubgroup < 0 || numSubgroup > 2) {
+            throw new IllegalArgumentException("Подгруппы всего две!");
+        }
         String url = "https://iis.bsuir.by/api/v1/schedule?studentGroup=" + groupNumber;
         RestTemplate restTemplate = new RestTemplate();
         String jsonResponse = restTemplate.getForObject(url, String.class);
