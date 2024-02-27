@@ -1,14 +1,11 @@
 package com.java.labs.avi.service;
-
 import com.java.labs.avi.repository.ScheduleRepository;
 import com.java.labs.avi.model.Schedule;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
 import java.util.List;
 
 @Service
