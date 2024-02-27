@@ -38,3 +38,4 @@ After starting the application, it will be accessible for API requests.
 ```bash
 # Retrieve schedule for a specific day, week, and subgroup
 curl "localhost:8080/schedule?groupNumber=250505&dayOfWeek=Суббота&weekNumber=2&numSubgroup=0"
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=AvIzAvR_JavaLabs&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=AvIzAvR_JavaLabs)
