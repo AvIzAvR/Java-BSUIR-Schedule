@@ -1,4 +1,4 @@
-# Java Lab Schedule Project
+# BSUIR Schedule Project
 
 [![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=AvIzAvR_JavaLabs)](https://sonarcloud.io/summary/new_code?id=AvIzAvR_JavaLabs)
 
