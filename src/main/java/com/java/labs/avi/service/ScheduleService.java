@@ -76,7 +76,19 @@ public class ScheduleService {
             }
             String startTime = scheduleJson.optString("startLessonTime", DEFAULT_VALUE);
             String endTime = scheduleJson.optString("endLessonTime", DEFAULT_VALUE);
-            saveOrUpdateSchedule(groupNumber, dayOfWeek, subject, lessonType, auditory, instructor, weekNumber, numSubgroup, startTime, endTime);
+            Schedule schedule = new Schedule();
+            schedule.setGroupNumber(groupNumber);
+            schedule.setDayOfWeek(dayOfWeek);
+            schedule.setWeekNumber(weekNumber);
+            schedule.setNumSubgroup(numSubgroup);
+            schedule.setSubject(subject);
+            schedule.setLessonType(lessonType);
+            schedule.setAuditory(auditory);
+            schedule.setInstructor(instructor);
+            schedule.setStartTime(startTime);
+            schedule.setEndTime(endTime);
+
+            saveOrUpdateSchedule(schedule);
         }
     }
 
@@ -89,24 +101,21 @@ public class ScheduleService {
         return 0;
     }
 
-    private void saveOrUpdateSchedule(String groupNumber, String dayOfWeek, String subject, String lessonType, String auditory, String instructor, int weekNumber, int numSubgroup, String startTime, String endTime) {
-        List<Schedule> existingSchedules = scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumberAndNumSubgroupAndSubjectAndLessonType(groupNumber, dayOfWeek, weekNumber, numSubgroup, subject, lessonType);
-        Schedule schedule;
-        if (existingSchedules.isEmpty()) {
-            schedule = new Schedule();
-            schedule.setGroupNumber(groupNumber);
-            schedule.setDayOfWeek(dayOfWeek);
-            schedule.setWeekNumber(weekNumber);
-            schedule.setNumSubgroup(numSubgroup);
-        } else {
-            schedule = existingSchedules.get(0);
+    private void saveOrUpdateSchedule(Schedule schedule) {
+        List<Schedule> existingSchedules = scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumberAndNumSubgroupAndSubjectAndLessonType(
+                schedule.getGroupNumber(),
+                schedule.getDayOfWeek(),
+                schedule.getWeekNumber(),
+                schedule.getNumSubgroup(),
+                schedule.getSubject(),
+                schedule.getLessonType()
+        );
+
+        if (!existingSchedules.isEmpty()) {
+            Schedule existingSchedule = existingSchedules.get(0);
+            schedule.setId(existingSchedule.getId()); // Устанавливаем ID для обновления
         }
-        schedule.setSubject(subject);
-        schedule.setLessonType(lessonType);
-        schedule.setAuditory(auditory);
-        schedule.setInstructor(instructor);
-        schedule.setStartTime(startTime);
-        schedule.setEndTime(endTime);
+
         scheduleRepository.save(schedule);
     }
 
@@ -117,7 +126,7 @@ public class ScheduleService {
         } else {
             List<Schedule> schedulesForAllSubgroups = new ArrayList<>();
             schedulesForAllSubgroups.addAll(scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumberAndNumSubgroup(
-                    groupNumber, dayOfWeek, targetWeekNumber, 0));
+                    groupNumber, dayOfWeek, targetWeekNumber, numSubgroup));
             schedulesForAllSubgroups.addAll(scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumberAndNumSubgroup(
                     groupNumber, dayOfWeek, targetWeekNumber, 1));
             schedulesForAllSubgroups.addAll(scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumberAndNumSubgroup(
