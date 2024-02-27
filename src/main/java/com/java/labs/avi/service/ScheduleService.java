@@ -18,7 +18,6 @@ public class ScheduleService {
     public ScheduleService(ScheduleRepository scheduleRepository) {
         this.scheduleRepository = scheduleRepository;
     }
-
     public List<Schedule> getScheduleByGroupDayWeekAndSubgroup(String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) throws JSONException {
         validateWeekNumber(targetWeekNumber);
         validateNumSubgroup(numSubgroup);
@@ -30,30 +29,25 @@ public class ScheduleService {
 
         return retrieveSchedules(groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
     }
-
     private void validateWeekNumber(int targetWeekNumber) {
         if (targetWeekNumber > 4 || targetWeekNumber < 1) {
             throw new IllegalArgumentException("Неделя не может быть больше 4!");
         }
     }
-
     private void validateNumSubgroup(int numSubgroup) {
         if (numSubgroup < 0 || numSubgroup > 2) {
             throw new IllegalArgumentException("Подгруппы всего две!");
         }
     }
-
     private String fetchScheduleJson(String groupNumber) {
         String url = "https://iis.bsuir.by/api/v1/schedule?studentGroup=" + groupNumber;
         RestTemplate restTemplate = new RestTemplate();
         return restTemplate.getForObject(url, String.class);
     }
-
     private JSONArray extractSchedulesFromJson(String jsonResponse, String dayOfWeek) throws JSONException {
         JSONObject jsonObject = new JSONObject(jsonResponse);
         return jsonObject.getJSONObject("schedules").getJSONArray(dayOfWeek);
     }
-
     private void processSchedules(JSONArray schedules, String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) throws JSONException {
         for (int i = 0; i < schedules.length(); i++) {
             JSONObject scheduleJson = schedules.getJSONObject(i);
@@ -87,11 +81,9 @@ public class ScheduleService {
             schedule.setInstructor(instructor);
             schedule.setStartTime(startTime);
             schedule.setEndTime(endTime);
-
             saveOrUpdateSchedule(schedule);
         }
     }
-
     private int findWeekNumber(JSONArray weekNumbersArray, int targetWeekNumber) throws JSONException {
         for (int j = 0; j < weekNumbersArray.length(); j++) {
             if (weekNumbersArray.getInt(j) == targetWeekNumber) {
@@ -100,7 +92,6 @@ public class ScheduleService {
         }
         return 0;
     }
-
     private void saveOrUpdateSchedule(Schedule schedule) {
         List<Schedule> existingSchedules = scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumberAndNumSubgroupAndSubjectAndLessonType(
                 schedule.getGroupNumber(),
@@ -110,15 +101,12 @@ public class ScheduleService {
                 schedule.getSubject(),
                 schedule.getLessonType()
         );
-
         if (!existingSchedules.isEmpty()) {
             Schedule existingSchedule = existingSchedules.get(0);
-            schedule.setId(existingSchedule.getId()); // Устанавливаем ID для обновления
+            schedule.setId(existingSchedule.getId());
         }
-
         scheduleRepository.save(schedule);
     }
-
     private List<Schedule> retrieveSchedules(String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) {
         if (numSubgroup != 0) {
             return scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumberAndNumSubgroup(
@@ -135,7 +123,6 @@ public class ScheduleService {
             return schedulesForAllSubgroups;
         }
     }
-
 
 
 }
