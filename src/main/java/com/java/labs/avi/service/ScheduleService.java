@@ -1,6 +1,6 @@
 package com.java.labs.avi.service;
-import com.java.labs.avi.repository.ScheduleRepository;
 import com.java.labs.avi.model.Schedule;
+import com.java.labs.avi.repository.ScheduleRepository;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -11,14 +11,14 @@ import java.util.List;
 @Service
 public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
-    public ScheduleService(ScheduleRepository scheduleRepository) {
-        this.scheduleRepository = scheduleRepository;
-    }
     private static final String DEFAULT_VALUE = "не указано";
     private static final String NUM_SUBGROUP = "numSubgroup";
 
-    public List<Schedule> getScheduleByGroupDayWeekAndSubgroup(String groupNumber, String dayOfWeek, int weekNumber, int numSubgroup) throws JSONException {
-        if (weekNumber > 4 || weekNumber < 1) {
+    public ScheduleService(ScheduleRepository scheduleRepository) {
+        this.scheduleRepository = scheduleRepository;
+    }
+    public List<Schedule> getScheduleByGroupDayWeekAndSubgroup(String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) throws JSONException {
+        if (targetWeekNumber > 4 || targetWeekNumber < 1) {
             throw new IllegalArgumentException("Неделя не может быть больше 4!");
         }
         if (numSubgroup < 0 || numSubgroup > 2) {
@@ -33,41 +33,61 @@ public class ScheduleService {
             JSONObject scheduleJson = schedules.getJSONObject(i);
             String subject = scheduleJson.optString("subjectFullName", DEFAULT_VALUE);
             String lessonType = scheduleJson.optString("lessonTypeAbbrev", DEFAULT_VALUE);
-            List<Schedule> existingSchedules = scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumberAndNumSubgroupAndSubjectAndLessonType(groupNumber, dayOfWeek, weekNumber, numSubgroup, subject, lessonType);
+            String auditory = scheduleJson.optJSONArray("auditories").optString(0, DEFAULT_VALUE);
+            String instructor = DEFAULT_VALUE;
+            JSONArray employees = scheduleJson.optJSONArray("employees");
+            if (employees != null && !employees.isEmpty()) {
+                JSONObject instructorJson = employees.getJSONObject(0);
+                String firstName = instructorJson.optString("firstName", "");
+                String middleName = instructorJson.optString("middleName", "");
+                String lastName = instructorJson.optString("lastName", "");
+                instructor = String.format("%s %s %s", firstName, middleName, lastName).trim();
+                instructor = instructor.isEmpty() ? DEFAULT_VALUE : instructor;
+            }
+            int weekNumber = 0;
+            JSONArray weekNumbersArray = scheduleJson.optJSONArray("weekNumber");
+            if (weekNumbersArray != null && weekNumbersArray.length() > 0) {
+                for (int j = 0; j < weekNumbersArray.length(); j++) {
+                    if (weekNumbersArray.getInt(j) == targetWeekNumber) {
+                        weekNumber = targetWeekNumber;
+                        break;
+                    }
+                }
+            }
+            if (weekNumber == 0) {
+                continue;
+            }
+            int subgroupFromApi = scheduleJson.optInt(NUM_SUBGROUP, 0);
+            if (numSubgroup != 0 && numSubgroup != subgroupFromApi) {
+                continue;
+            }
+            List<Schedule> existingSchedules = scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumberAndNumSubgroupAndSubjectAndLessonType(groupNumber, dayOfWeek, weekNumber, subgroupFromApi, subject, lessonType);
             if (existingSchedules.isEmpty()) {
-                Schedule newSchedule = parseSchedule(scheduleJson);
+                Schedule newSchedule = new Schedule();
                 newSchedule.setGroupNumber(groupNumber);
                 newSchedule.setDayOfWeek(dayOfWeek);
                 newSchedule.setWeekNumber(weekNumber);
-                newSchedule.setNumSubgroup(numSubgroup);
+                newSchedule.setNumSubgroup(subgroupFromApi);
+                newSchedule.setSubject(subject);
+                newSchedule.setLessonType(lessonType);
+                newSchedule.setAuditory(auditory);
+                newSchedule.setInstructor(instructor);
                 scheduleRepository.save(newSchedule);
+            } else {
+                Schedule existingSchedule = existingSchedules.get(0);
+                existingSchedule.setSubject(subject);
+                existingSchedule.setLessonType(lessonType);
+                existingSchedule.setAuditory(auditory);
+                existingSchedule.setInstructor(instructor);
+                scheduleRepository.save(existingSchedule);
             }
         }
-        return scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumberAndNumSubgroup(groupNumber, dayOfWeek, weekNumber, numSubgroup);
+        if (numSubgroup != 0) {
+            return scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumberAndNumSubgroup(groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
+        } else {
+            return scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumber(groupNumber, dayOfWeek, targetWeekNumber);
+        }
     }
 
-    private Schedule parseSchedule(JSONObject scheduleJson) throws JSONException {
-        Schedule schedule = new Schedule();
-        schedule.setSubject(scheduleJson.optString("subjectFullName", DEFAULT_VALUE));
-        schedule.setLessonType(scheduleJson.optString("lessonTypeAbbrev", DEFAULT_VALUE));
-        JSONArray auditories = scheduleJson.optJSONArray("auditories");
-        if (auditories != null && !auditories.isEmpty()) {
-            schedule.setAuditory(auditories.optString(0, DEFAULT_VALUE));
-        } else {
-            schedule.setAuditory(DEFAULT_VALUE);
-        }
-        JSONArray employees = scheduleJson.optJSONArray("employees");
-        if (employees != null && !employees.isEmpty()) {
-            JSONObject instructorJson = employees.getJSONObject(0);
-            String firstName = instructorJson.optString("firstName", "");
-            String middleName = instructorJson.optString("middleName", "");
-            String lastName = instructorJson.optString("lastName", "");
-            String fullName = String.format("%s %s %s", firstName, middleName, lastName).trim();
-            schedule.setInstructor(fullName.isEmpty() ? DEFAULT_VALUE : fullName);
-        } else {
-            schedule.setInstructor(DEFAULT_VALUE);
-        }
-        schedule.setNumSubgroup(scheduleJson.optInt(NUM_SUBGROUP, 0));
-        return schedule;
-    }
 }
+

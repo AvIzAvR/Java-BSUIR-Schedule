@@ -25,10 +25,10 @@ public class ScheduleController {
     public ResponseEntity<List<Schedule>> getScheduleForDayOfWeek(
             @RequestParam String groupNumber,
             @RequestParam String dayOfWeek,
-            @RequestParam int weekNumber,
+            @RequestParam int targetWeekNumber,
             @RequestParam int numSubgroup) throws JSONException {
 
-        List<Schedule> scheduleList = scheduleService.getScheduleByGroupDayWeekAndSubgroup(groupNumber, dayOfWeek, weekNumber, numSubgroup);
+        List<Schedule> scheduleList = scheduleService.getScheduleByGroupDayWeekAndSubgroup(groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
         return new ResponseEntity<>(scheduleList, HttpStatus.OK);
     }
 }
