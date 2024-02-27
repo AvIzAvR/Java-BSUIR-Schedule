@@ -6,6 +6,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -17,18 +18,43 @@ public class ScheduleService {
     public ScheduleService(ScheduleRepository scheduleRepository) {
         this.scheduleRepository = scheduleRepository;
     }
+
     public List<Schedule> getScheduleByGroupDayWeekAndSubgroup(String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) throws JSONException {
+        validateWeekNumber(targetWeekNumber);
+        validateNumSubgroup(numSubgroup);
+
+        String jsonResponse = fetchScheduleJson(groupNumber);
+        JSONArray schedules = extractSchedulesFromJson(jsonResponse, dayOfWeek);
+
+        processSchedules(schedules, groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
+
+        return retrieveSchedules(groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
+    }
+
+    private void validateWeekNumber(int targetWeekNumber) {
         if (targetWeekNumber > 4 || targetWeekNumber < 1) {
             throw new IllegalArgumentException("Неделя не может быть больше 4!");
         }
+    }
+
+    private void validateNumSubgroup(int numSubgroup) {
         if (numSubgroup < 0 || numSubgroup > 2) {
             throw new IllegalArgumentException("Подгруппы всего две!");
         }
+    }
+
+    private String fetchScheduleJson(String groupNumber) {
         String url = "https://iis.bsuir.by/api/v1/schedule?studentGroup=" + groupNumber;
         RestTemplate restTemplate = new RestTemplate();
-        String jsonResponse = restTemplate.getForObject(url, String.class);
+        return restTemplate.getForObject(url, String.class);
+    }
+
+    private JSONArray extractSchedulesFromJson(String jsonResponse, String dayOfWeek) throws JSONException {
         JSONObject jsonObject = new JSONObject(jsonResponse);
-        JSONArray schedules = jsonObject.getJSONObject("schedules").getJSONArray(dayOfWeek);
+        return jsonObject.getJSONObject("schedules").getJSONArray(dayOfWeek);
+    }
+
+    private void processSchedules(JSONArray schedules, String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) throws JSONException {
         for (int i = 0; i < schedules.length(); i++) {
             JSONObject scheduleJson = schedules.getJSONObject(i);
             String subject = scheduleJson.optString("subjectFullName", DEFAULT_VALUE);
@@ -44,50 +70,63 @@ public class ScheduleService {
                 instructor = String.format("%s %s %s", firstName, middleName, lastName).trim();
                 instructor = instructor.isEmpty() ? DEFAULT_VALUE : instructor;
             }
-            int weekNumber = 0;
-            JSONArray weekNumbersArray = scheduleJson.optJSONArray("weekNumber");
-            if (weekNumbersArray != null && weekNumbersArray.length() > 0) {
-                for (int j = 0; j < weekNumbersArray.length(); j++) {
-                    if (weekNumbersArray.getInt(j) == targetWeekNumber) {
-                        weekNumber = targetWeekNumber;
-                        break;
-                    }
-                }
-            }
-            if (weekNumber == 0) {
+            int weekNumber = findWeekNumber(scheduleJson.getJSONArray("weekNumber"), targetWeekNumber);
+            if (weekNumber == 0 || (numSubgroup != 0 && numSubgroup != scheduleJson.optInt(NUM_SUBGROUP, -1))) {
                 continue;
             }
-            int subgroupFromApi = scheduleJson.optInt(NUM_SUBGROUP, 0);
-            if (numSubgroup != 0 && numSubgroup != subgroupFromApi) {
-                continue;
-            }
-            List<Schedule> existingSchedules = scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumberAndNumSubgroupAndSubjectAndLessonType(groupNumber, dayOfWeek, weekNumber, subgroupFromApi, subject, lessonType);
-            if (existingSchedules.isEmpty()) {
-                Schedule newSchedule = new Schedule();
-                newSchedule.setGroupNumber(groupNumber);
-                newSchedule.setDayOfWeek(dayOfWeek);
-                newSchedule.setWeekNumber(weekNumber);
-                newSchedule.setNumSubgroup(subgroupFromApi);
-                newSchedule.setSubject(subject);
-                newSchedule.setLessonType(lessonType);
-                newSchedule.setAuditory(auditory);
-                newSchedule.setInstructor(instructor);
-                scheduleRepository.save(newSchedule);
-            } else {
-                Schedule existingSchedule = existingSchedules.get(0);
-                existingSchedule.setSubject(subject);
-                existingSchedule.setLessonType(lessonType);
-                existingSchedule.setAuditory(auditory);
-                existingSchedule.setInstructor(instructor);
-                scheduleRepository.save(existingSchedule);
-            }
-        }
-        if (numSubgroup != 0) {
-            return scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumberAndNumSubgroup(groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
-        } else {
-            return scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumber(groupNumber, dayOfWeek, targetWeekNumber);
+            String startTime = scheduleJson.optString("startLessonTime", DEFAULT_VALUE);
+            String endTime = scheduleJson.optString("endLessonTime", DEFAULT_VALUE);
+            saveOrUpdateSchedule(groupNumber, dayOfWeek, subject, lessonType, auditory, instructor, weekNumber, numSubgroup, startTime, endTime);
         }
     }
 
-}
+    private int findWeekNumber(JSONArray weekNumbersArray, int targetWeekNumber) throws JSONException {
+        for (int j = 0; j < weekNumbersArray.length(); j++) {
+            if (weekNumbersArray.getInt(j) == targetWeekNumber) {
+                return targetWeekNumber;
+            }
+        }
+        return 0;
+    }
 
+    private void saveOrUpdateSchedule(String groupNumber, String dayOfWeek, String subject, String lessonType, String auditory, String instructor, int weekNumber, int numSubgroup, String startTime, String endTime) {
+        List<Schedule> existingSchedules = scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumberAndNumSubgroupAndSubjectAndLessonType(groupNumber, dayOfWeek, weekNumber, numSubgroup, subject, lessonType);
+        Schedule schedule;
+        if (existingSchedules.isEmpty()) {
+            schedule = new Schedule();
+            schedule.setGroupNumber(groupNumber);
+            schedule.setDayOfWeek(dayOfWeek);
+            schedule.setWeekNumber(weekNumber);
+            schedule.setNumSubgroup(numSubgroup);
+        } else {
+            schedule = existingSchedules.get(0);
+        }
+        schedule.setSubject(subject);
+        schedule.setLessonType(lessonType);
+        schedule.setAuditory(auditory);
+        schedule.setInstructor(instructor);
+        schedule.setStartTime(startTime);
+        schedule.setEndTime(endTime);
+        scheduleRepository.save(schedule);
+    }
+
+    private List<Schedule> retrieveSchedules(String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) {
+        if (numSubgroup != 0) {
+            return scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumberAndNumSubgroup(
+                    groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
+        } else {
+            List<Schedule> schedulesForAllSubgroups = new ArrayList<>();
+            schedulesForAllSubgroups.addAll(scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumberAndNumSubgroup(
+                    groupNumber, dayOfWeek, targetWeekNumber, 0));
+            schedulesForAllSubgroups.addAll(scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumberAndNumSubgroup(
+                    groupNumber, dayOfWeek, targetWeekNumber, 1));
+            schedulesForAllSubgroups.addAll(scheduleRepository.findByGroupNumberAndDayOfWeekAndWeekNumberAndNumSubgroup(
+                    groupNumber, dayOfWeek, targetWeekNumber, 2));
+
+            return schedulesForAllSubgroups;
+        }
+    }
+
+
+
+}
