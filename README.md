@@ -1,5 +1,7 @@
 # Java Lab Schedule Project
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=AvIzAvR_JavaLabs&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=AvIzAvR_JavaLabs)
+
 This project is designed to manage and retrieve schedules for students, focusing on daily and weekly schedules. It interfaces with an external API to fetch schedule data, then parses and presents this information based on group numbers, days of the week, week numbers, and subgroup numbers. The application is built with Spring Boot and utilizes RestTemplate for API communication.
 
 ## Project Structure
@@ -38,4 +40,3 @@ After starting the application, it will be accessible for API requests.
 ```bash
 # Retrieve schedule for a specific day, week, and subgroup
 curl "localhost:8080/schedule?groupNumber=250505&dayOfWeek=Суббота&weekNumber=2&numSubgroup=0"
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=AvIzAvR_JavaLabs&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=AvIzAvR_JavaLabs)
