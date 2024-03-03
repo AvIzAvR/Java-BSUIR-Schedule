@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ScheduleService {
@@ -123,6 +124,48 @@ public class ScheduleService {
             return schedulesForAllSubgroups;
         }
     }
-
+    public Schedule saveSchedule(Schedule schedule) {
+        return scheduleRepository.save(schedule);
+    }
+    public Schedule updateSchedule(Long id, Schedule updatedSchedule) {
+        return scheduleRepository.findById(id).map(schedule -> {
+            schedule.setSubject(updatedSchedule.getSubject());
+            schedule.setLessonType(updatedSchedule.getLessonType());
+            schedule.setAuditory(updatedSchedule.getAuditory());
+            schedule.setInstructor(updatedSchedule.getInstructor());
+            schedule.setGroupNumber(updatedSchedule.getGroupNumber());
+            schedule.setDayOfWeek(updatedSchedule.getDayOfWeek());
+            schedule.setNumSubgroup(updatedSchedule.getNumSubgroup());
+            schedule.setWeekNumber(updatedSchedule.getWeekNumber());
+            schedule.setStartTime(updatedSchedule.getStartTime());
+            schedule.setEndTime(updatedSchedule.getEndTime());
+            return scheduleRepository.save(schedule);
+        }).orElse(null);
+    }
+    public Schedule patchSchedule(Long id, Map<String, Object> updates) {
+        return scheduleRepository.findById(id).map(schedule -> {
+            updates.forEach((key, value) -> {
+                switch (key) {
+                    case "subject": schedule.setSubject((String) value); break;
+                    case "lessonType": schedule.setLessonType((String) value); break;
+                    case "auditory": schedule.setAuditory((String) value); break;
+                    case "instructor": schedule.setInstructor((String) value); break;
+                    case "groupNumber": schedule.setGroupNumber((String) value); break;
+                    case "dayOfWeek": schedule.setDayOfWeek((String) value); break;
+                    case "numSubgroup": schedule.setNumSubgroup((int) value); break;
+                    case "weekNumber": schedule.setWeekNumber((int) value); break;
+                    case "startTime": schedule.setStartTime((String) value); break;
+                    case "endTime": schedule.setEndTime((String) value); break;
+                }
+            });
+            return scheduleRepository.save(schedule);
+        }).orElse(null);
+    }
+    public boolean deleteSchedule(Long id) {
+        return scheduleRepository.findById(id).map(schedule -> {
+            scheduleRepository.delete(schedule);
+            return true;
+        }).orElse(false);
+    }
 
 }
