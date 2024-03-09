@@ -1,25 +1,98 @@
 package com.java.labs.avi.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity
 public class Schedule {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String subject;
-    private String lessonType;
-    private String auditory;
-    private String instructor;
-    private String groupNumber;
+
+    @ManyToOne
+    @JoinColumn(name = "group_id", nullable = false) // Указывает на столбец внешнего ключа для группы
+    private Group group;
+
+    @ManyToOne
+    @JoinColumn(name = "auditorium_id", nullable = false)
+    private Auditorium auditorium;
+
+    @ManyToOne
+    @JoinColumn(name = "subject_id", nullable = false)
+    private Subject subject;
+
+    @ManyToOne
+    @JoinColumn(name = "instructor_id", nullable = false)
+    private Instructor instructor;
+
     private String dayOfWeek;
     private int numSubgroup;
     private int weekNumber;
     private String startTime;
     private String endTime;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Group getGroup() {
+        return group;
+    }
+
+    public void setGroup(Group group) {
+        this.group = group;
+    }
+
+    public Auditorium getAuditorium() {
+        return auditorium;
+    }
+
+    public void setAuditorium(Auditorium auditorium) {
+        this.auditorium = auditorium;
+    }
+
+    public Subject getSubject() {
+        return subject;
+    }
+
+    public void setSubject(Subject subject) {
+        this.subject = subject;
+    }
+
+    public Instructor getInstructor() {
+        return instructor;
+    }
+
+    public void setInstructor(Instructor instructor) {
+        this.instructor = instructor;
+    }
+
+    public String getDayOfWeek() {
+        return dayOfWeek;
+    }
+
+    public void setDayOfWeek(String dayOfWeek) {
+        this.dayOfWeek = dayOfWeek;
+    }
+
+    public int getNumSubgroup() {
+        return numSubgroup;
+    }
+
+    public void setNumSubgroup(int numSubgroup) {
+        this.numSubgroup = numSubgroup;
+    }
+
+    public int getWeekNumber() {
+        return weekNumber;
+    }
+
+    public void setWeekNumber(int weekNumber) {
+        this.weekNumber = weekNumber;
+    }
 
     public String getStartTime() {
         return startTime;
@@ -35,77 +108,5 @@ public class Schedule {
 
     public void setEndTime(String endTime) {
         this.endTime = endTime;
-    }
-
-    public String getGroupNumber() {
-        return groupNumber;
-    }
-
-    public void setGroupNumber(String groupNumber) {
-        this.groupNumber = groupNumber;
-    }
-
-    public int getWeekNumber() {
-        return weekNumber;
-    }
-
-    public void setWeekNumber(int weekNumber) {
-        this.weekNumber = weekNumber;
-    }
-
-    public String getDayOfWeek() {
-        return dayOfWeek;
-    }
-
-    public void setDayOfWeek(String dayOfWeek) {
-        this.dayOfWeek = dayOfWeek;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public String getLessonType() {
-        return lessonType;
-    }
-
-    public void setLessonType(String lessonType) {
-        this.lessonType = lessonType;
-    }
-
-    public String getAuditory() {
-        return auditory;
-    }
-
-    public void setAuditory(String auditory) {
-        this.auditory = auditory;
-    }
-
-    public String getInstructor() {
-        return instructor;
-    }
-
-    public void setInstructor(String instructor) {
-        this.instructor = instructor;
-    }
-
-    public int getNumSubgroup() {
-        return numSubgroup;
-    }
-
-    public void setNumSubgroup(int numSubgroup) {
-        this.numSubgroup = numSubgroup;
     }
 }
