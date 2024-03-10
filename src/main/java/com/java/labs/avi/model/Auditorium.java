@@ -9,10 +9,10 @@ public class Auditorium {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String number; // Номер аудитории
+    private String number;
 
     @OneToMany(mappedBy = "auditorium")
-    private Set<Schedule> schedules = new HashSet<>();
+    private Set<Group> groups = new HashSet<>();
 
     public Auditorium(String auditoryName) {
         this.number = auditoryName;
@@ -38,11 +38,11 @@ public class Auditorium {
         this.number = number;
     }
 
-    public Set<Schedule> getSchedules() {
-        return schedules;
+    public Set<Group> getGroups() {
+        return groups;
     }
 
-    public void setSchedules(Set<Schedule> schedules) {
-        this.schedules = schedules;
+    public void setGroups(Set<Group> groups) {
+        this.groups = groups;
     }
 }

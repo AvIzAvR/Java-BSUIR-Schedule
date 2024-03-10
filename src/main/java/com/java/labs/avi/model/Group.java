@@ -1,17 +1,24 @@
 package com.java.labs.avi.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
+@Table(name = "groups_table")
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "id")
 public class Group {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    @OneToMany(mappedBy = "group")
-    private Set<Schedule> schedules = new HashSet<>();
+    @ManyToOne
+    @JoinColumn(name = "auditorium_id", nullable = false)
+    private Auditorium auditorium;
 
     public Group(String groupNumber) {
         this.name = groupNumber;
@@ -37,11 +44,11 @@ public class Group {
         this.name = name;
     }
 
-    public Set<Schedule> getSchedules() {
-        return schedules;
+    public Auditorium getAuditorium() {
+        return auditorium;
     }
 
-    public void setSchedules(Set<Schedule> schedules) {
-        this.schedules = schedules;
+    public void setAuditorium(Auditorium auditorium) {
+        this.auditorium = auditorium;
     }
 }

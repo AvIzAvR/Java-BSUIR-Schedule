@@ -1,15 +1,20 @@
 package com.java.labs.avi.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 
 @Entity
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "id")
 public class Schedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "group_id", nullable = false) // Указывает на столбец внешнего ключа для группы
+    @JoinColumn(name = "group_id", nullable = false)
     private Group group;
 
     @ManyToOne
