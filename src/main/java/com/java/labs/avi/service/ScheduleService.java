@@ -6,12 +6,9 @@ import com.java.labs.avi.repository.*;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class ScheduleService {
@@ -52,13 +49,9 @@ public class ScheduleService {
     protected List<Schedule> processSchedules(JSONArray schedulesJson, String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) {
         List<Schedule> schedules = new ArrayList<>();
         for (int i = 0; i < schedulesJson.length(); i++) {
-            try {
-                JSONObject scheduleJson = schedulesJson.getJSONObject(i);
-                Schedule schedule = processScheduleData(scheduleJson, groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
-                schedules.add(schedule);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+            JSONObject scheduleJson = schedulesJson.getJSONObject(i);
+            Schedule schedule = processScheduleData(scheduleJson, groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
+            schedules.add(schedule);
         }
         return schedules;
     }
@@ -90,13 +83,11 @@ public class ScheduleService {
                     return subjectRepository.save(newSubject);
                 });
 
-        // Ensure the instructor is linked to the subject
         if (!subject.getInstructors().contains(instructor)) {
             subject.getInstructors().add(instructor);
             subjectRepository.save(subject);
         }
 
-        // Check for an existing schedule
         List<Schedule> existingSchedules = scheduleRepository.findByGroupNameAndDayOfWeekAndWeekNumberAndNumSubgroupAndStartTimeAndEndTime(
                 groupNumber, dayOfWeek, targetWeekNumber, numSubgroup, startTime, endTime);
 
@@ -120,7 +111,7 @@ public class ScheduleService {
 
     private String extractInstructorFullName(JSONObject scheduleJson) throws JSONException {
         JSONArray employees = scheduleJson.optJSONArray("employees");
-        if (employees != null && employees.length() > 0) {
+        if (employees != null && !employees.isEmpty()) {
             JSONObject instructorJson = employees.getJSONObject(0);
             String firstName = instructorJson.optString("firstName", "");
             String middleName = instructorJson.optString("middleName", "");

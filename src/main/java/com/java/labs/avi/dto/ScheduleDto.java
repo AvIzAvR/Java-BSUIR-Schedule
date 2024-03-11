@@ -25,6 +25,13 @@ package com.java.labs.avi.dto;
         }
 
         public static class Builder {
+            /**
+             * Пустой конструктор Builder'а.
+             * Используется для инициализации нового Builder'а.
+             * В данном контексте, конкретная логика инициализации не требуется,
+             * так как Builder предоставляет шаблонные методы для установки свойств объекта.
+             * Этот конструктор позволяет начать процесс построения объекта с чистого состояния.
+             */
             private Long id;
             private String groupName;
             private String auditoriumNumber;
