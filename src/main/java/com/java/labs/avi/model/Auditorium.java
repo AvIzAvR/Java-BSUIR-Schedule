@@ -10,10 +10,6 @@ public class Auditorium {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String number;
-
-    @OneToMany(mappedBy = "auditorium")
-    private Set<Group> groups = new HashSet<>();
-
     public Auditorium(String auditoryName) {
         this.number = auditoryName;
     }
@@ -21,6 +17,8 @@ public class Auditorium {
     public Auditorium() {
 
     }
+    @OneToMany(mappedBy = "auditorium")
+    private Set<Group> groups = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -36,13 +34,5 @@ public class Auditorium {
 
     public void setNumber(String number) {
         this.number = number;
-    }
-
-    public Set<Group> getGroups() {
-        return groups;
-    }
-
-    public void setGroups(Set<Group> groups) {
-        this.groups = groups;
     }
 }

@@ -1,13 +1,8 @@
 package com.java.labs.avi.model;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 
 @Entity
-@JsonIdentityInfo(
-        generator = ObjectIdGenerators.PropertyGenerator.class,
-        property = "id")
 public class Schedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,11 +24,27 @@ public class Schedule {
     @JoinColumn(name = "instructor_id", nullable = false)
     private Instructor instructor;
 
+    @Column(name = "day_of_week", nullable = false)
     private String dayOfWeek;
+
+    @Column(name = "num_subgroup", nullable = false)
     private int numSubgroup;
+
+    @Column(name = "week_number", nullable = false)
     private int weekNumber;
+
+    @Column(name = "start_time", nullable = false)
     private String startTime;
+
+    @Column(name = "end_time", nullable = false)
     private String endTime;
+
+    // Constructors, Getters, and Setters
+
+    public Schedule() {
+    }
+
+    // Getters and setters
 
     public Long getId() {
         return id;
@@ -114,4 +125,5 @@ public class Schedule {
     public void setEndTime(String endTime) {
         this.endTime = endTime;
     }
+
 }

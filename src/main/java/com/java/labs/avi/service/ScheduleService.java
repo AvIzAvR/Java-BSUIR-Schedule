@@ -1,17 +1,8 @@
 package com.java.labs.avi.service;
 
 import com.java.labs.avi.dto.ScheduleDto;
-import com.java.labs.avi.model.Auditorium;
-import com.java.labs.avi.model.Group;
-import com.java.labs.avi.model.Instructor;
-import com.java.labs.avi.model.Schedule;
-import com.java.labs.avi.model.Subject;
-import com.java.labs.avi.repository.AuditoriumRepository;
-import com.java.labs.avi.repository.GroupRepository;
-import com.java.labs.avi.repository.InstructorRepository;
-import com.java.labs.avi.repository.ScheduleRepository;
-import com.java.labs.avi.repository.SubjectRepository;
-import jakarta.transaction.Transactional;
+import com.java.labs.avi.model.*;
+import com.java.labs.avi.repository.*;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -19,8 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,35 +34,20 @@ public class ScheduleService {
         String jsonResponse = fetchScheduleJson(groupNumber);
         try {
             JSONObject jsonObject = new JSONObject(jsonResponse);
-            // Сначала проверяем, существует ли ключ "schedules" в полученном JSON
-            if (jsonObject.has("schedules")) {
-                JSONObject schedules = jsonObject.getJSONObject("schedules");
-                // Проверяем, существует ли нужный день недели в "schedules"
-                if (schedules.has(dayOfWeek)) {
-                    JSONArray daySchedules = schedules.getJSONArray(dayOfWeek);
-                    List<Schedule> processedSchedules = processSchedules(daySchedules, groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
-                    return convertToDto(processedSchedules);
-                }
-            }
-            return new ArrayList<>();
+            JSONArray daySchedules = jsonObject.getJSONObject("schedules").getJSONArray(dayOfWeek);
+            List<Schedule> processedSchedules = processSchedules(daySchedules, groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
+            return convertToDto(new ArrayList<>(new HashSet<>(processedSchedules))); // Ensure uniqueness
         } catch (JSONException e) {
             e.printStackTrace();
             return new ArrayList<>();
         }
     }
 
-
-
     private String fetchScheduleJson(String groupNumber) {
         String url = "https://iis.bsuir.by/api/v1/schedule?studentGroup=" + groupNumber;
         return restTemplate.getForObject(url, String.class);
     }
-    private JSONArray extractSchedulesFromJson(String jsonResponse, String dayOfWeek) throws JSONException {
-        JSONObject jsonObject = new JSONObject(jsonResponse);
-        return jsonObject.getJSONArray(dayOfWeek); // Убедитесь, что это правильный путь к данным
-    }
 
-    @Transactional
     protected List<Schedule> processSchedules(JSONArray schedulesJson, String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) {
         List<Schedule> schedules = new ArrayList<>();
         for (int i = 0; i < schedulesJson.length(); i++) {
@@ -87,23 +62,20 @@ public class ScheduleService {
         return schedules;
     }
 
-    @Transactional
-    private Schedule processScheduleData(JSONObject scheduleJson, String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) throws JSONException {
+    protected Schedule processScheduleData(JSONObject scheduleJson, String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) throws JSONException {
         String subjectName = scheduleJson.optString("subjectFullName", DEFAULT_VALUE);
         String auditoryName = scheduleJson.optJSONArray("auditories").optString(0, DEFAULT_VALUE);
         String instructorFullName = extractInstructorFullName(scheduleJson);
         String startTime = scheduleJson.optString("startLessonTime", DEFAULT_VALUE);
         String endTime = scheduleJson.optString("endLessonTime", DEFAULT_VALUE);
 
-        // Находим или создаем аудиторию
         Auditorium auditorium = auditoriumRepository.findByNumber(auditoryName)
                 .orElseGet(() -> auditoriumRepository.save(new Auditorium(auditoryName)));
 
-        // Находим или создаем группу, убедитесь, что устанавливаем связь с аудиторией
         Group group = groupRepository.findByName(groupNumber)
                 .orElseGet(() -> {
                     Group newGroup = new Group(groupNumber);
-                    newGroup.setAuditorium(auditorium); // Устанавливаем связь с аудиторией
+                    newGroup.setAuditorium(auditorium);
                     return groupRepository.save(newGroup);
                 });
 
@@ -117,25 +89,33 @@ public class ScheduleService {
                     return subjectRepository.save(newSubject);
                 });
 
+        // Ensure the instructor is linked to the subject
         if (!subject.getInstructors().contains(instructor)) {
             subject.getInstructors().add(instructor);
             subjectRepository.save(subject);
         }
 
-        Schedule schedule = new Schedule();
-        schedule.setGroup(group);
-        schedule.setAuditorium(auditorium);
-        schedule.setSubject(subject);
-        schedule.setInstructor(instructor);
-        schedule.setDayOfWeek(dayOfWeek);
-        schedule.setNumSubgroup(numSubgroup);
-        schedule.setWeekNumber(targetWeekNumber);
-        schedule.setStartTime(startTime);
-        schedule.setEndTime(endTime);
+        // Check for an existing schedule
+        List<Schedule> existingSchedules = scheduleRepository.findByGroupNameAndDayOfWeekAndWeekNumberAndNumSubgroupAndStartTimeAndEndTime(
+                groupNumber, dayOfWeek, targetWeekNumber, numSubgroup, startTime, endTime);
 
-        return scheduleRepository.save(schedule);
+        if (!existingSchedules.isEmpty()) {
+            return existingSchedules.get(0);
+        } else {
+            Schedule newSchedule = new Schedule();
+            newSchedule.setGroup(group);
+            newSchedule.setAuditorium(auditorium);
+            newSchedule.setSubject(subject);
+            newSchedule.setInstructor(instructor);
+            newSchedule.setDayOfWeek(dayOfWeek);
+            newSchedule.setNumSubgroup(numSubgroup);
+            newSchedule.setWeekNumber(targetWeekNumber);
+            newSchedule.setStartTime(startTime);
+            newSchedule.setEndTime(endTime);
+
+            return scheduleRepository.save(newSchedule);
+        }
     }
-
 
     private String extractInstructorFullName(JSONObject scheduleJson) throws JSONException {
         JSONArray employees = scheduleJson.optJSONArray("employees");
@@ -150,7 +130,7 @@ public class ScheduleService {
     }
 
     public List<ScheduleDto> convertToDto(List<Schedule> schedules) {
-        return schedules.stream().map(schedule -> new ScheduleDto(
+        return schedules.stream().distinct().map(schedule -> new ScheduleDto(
                 schedule.getId(),
                 schedule.getGroup().getName(),
                 schedule.getAuditorium().getNumber(),
