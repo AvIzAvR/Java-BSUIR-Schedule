@@ -15,32 +15,33 @@ import java.util.stream.Collectors;
 
 @Service
 public class ScheduleService {
-    @Autowired
-    private ScheduleRepository scheduleRepository;
-    @Autowired
-    private SubjectRepository subjectRepository;
-    @Autowired
-    private InstructorRepository instructorRepository;
-    @Autowired
-    private GroupRepository groupRepository;
-    @Autowired
-    private AuditoriumRepository auditoriumRepository;
-    @Autowired
-    private RestTemplate restTemplate;
+    private final ScheduleRepository scheduleRepository;
+    private final SubjectRepository subjectRepository;
+    private final InstructorRepository instructorRepository;
+    private final GroupRepository groupRepository;
+    private final AuditoriumRepository auditoriumRepository;
+    private final RestTemplate restTemplate;
+
+    public ScheduleService(ScheduleRepository scheduleRepository, SubjectRepository subjectRepository,
+                           InstructorRepository instructorRepository, GroupRepository groupRepository,
+                           AuditoriumRepository auditoriumRepository, RestTemplate restTemplate) {
+        this.scheduleRepository = scheduleRepository;
+        this.subjectRepository = subjectRepository;
+        this.instructorRepository = instructorRepository;
+        this.groupRepository = groupRepository;
+        this.auditoriumRepository = auditoriumRepository;
+        this.restTemplate = restTemplate;
+    }
+
 
     private static final String DEFAULT_VALUE = "не указано";
 
     public List<ScheduleDto> getScheduleByGroupDayWeekAndSubgroup(String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) {
         String jsonResponse = fetchScheduleJson(groupNumber);
-        try {
-            JSONObject jsonObject = new JSONObject(jsonResponse);
-            JSONArray daySchedules = jsonObject.getJSONObject("schedules").getJSONArray(dayOfWeek);
-            List<Schedule> processedSchedules = processSchedules(daySchedules, groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
-            return convertToDto(new ArrayList<>(new HashSet<>(processedSchedules))); // Ensure uniqueness
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return new ArrayList<>();
-        }
+        JSONObject jsonObject = new JSONObject(jsonResponse);
+        JSONArray daySchedules = jsonObject.getJSONObject("schedules").getJSONArray(dayOfWeek);
+        List<Schedule> processedSchedules = processSchedules(daySchedules, groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
+        return convertToDto(new ArrayList<>(new HashSet<>(processedSchedules))); // Ensure uniqueness
     }
 
     private String fetchScheduleJson(String groupNumber) {
@@ -130,17 +131,19 @@ public class ScheduleService {
     }
 
     public List<ScheduleDto> convertToDto(List<Schedule> schedules) {
-        return schedules.stream().distinct().map(schedule -> new ScheduleDto(
-                schedule.getId(),
-                schedule.getGroup().getName(),
-                schedule.getAuditorium().getNumber(),
-                schedule.getSubject().getName(),
-                schedule.getInstructor().getName(),
-                schedule.getDayOfWeek(),
-                schedule.getNumSubgroup(),
-                schedule.getWeekNumber(),
-                schedule.getStartTime(),
-                schedule.getEndTime()
-        )).collect(Collectors.toList());
+        return schedules.stream().distinct().map(schedule ->
+                new ScheduleDto.Builder()
+                        .setId(schedule.getId())
+                        .setGroupName(schedule.getGroup().getName())
+                        .setAuditoriumNumber(schedule.getAuditorium().getNumber())
+                        .setSubjectName(schedule.getSubject().getName())
+                        .setInstructorName(schedule.getInstructor().getName())
+                        .setDayOfWeek(schedule.getDayOfWeek())
+                        .setNumSubgroup(schedule.getNumSubgroup())
+                        .setWeekNumber(schedule.getWeekNumber())
+                        .setStartTime(schedule.getStartTime())
+                        .setEndTime(schedule.getEndTime())
+                        .build()
+        ).toList();
     }
 }

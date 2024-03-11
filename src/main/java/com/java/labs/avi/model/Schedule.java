@@ -39,12 +39,6 @@ public class Schedule {
     @Column(name = "end_time", nullable = false)
     private String endTime;
 
-    // Constructors, Getters, and Setters
-
-    public Schedule() {
-    }
-
-    // Getters and setters
 
     public Long getId() {
         return id;

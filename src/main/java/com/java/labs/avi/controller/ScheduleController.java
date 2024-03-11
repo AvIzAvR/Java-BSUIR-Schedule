@@ -31,17 +31,11 @@ public class ScheduleController {
                                                                      @RequestParam String dayOfWeek,
                                                                      @RequestParam int targetWeekNumber,
                                                                      @RequestParam int numSubgroup) {
-        try {
-            log.info("Fetching schedule for groupNumber: {}, dayOfWeek: {}, targetWeekNumber: {}, numSubgroup: {}", groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
             List<ScheduleDto> scheduleDtos = scheduleService.getScheduleByGroupDayWeekAndSubgroup(groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
             if(scheduleDtos.isEmpty()) {
                 log.info("No schedules found for the given parameters.");
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
             return new ResponseEntity<>(scheduleDtos, HttpStatus.OK);
-        } catch (Exception e) {
-            log.error("Error fetching schedule: ", e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
     }
 }

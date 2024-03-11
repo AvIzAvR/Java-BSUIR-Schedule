@@ -11,19 +11,87 @@ package com.java.labs.avi.dto;
         private String startTime;
         private String endTime;
 
-        public ScheduleDto(Long id, String groupName, String auditoriumNumber, String subjectName,
-                           String instructorName, String dayOfWeek, int numSubgroup, int weekNumber,
-                           String startTime, String endTime) {
-            this.id = id;
-            this.groupName = groupName;
-            this.auditoriumNumber = auditoriumNumber;
-            this.subjectName = subjectName;
-            this.instructorName = instructorName;
-            this.dayOfWeek = dayOfWeek;
-            this.numSubgroup = numSubgroup;
-            this.weekNumber = weekNumber;
-            this.startTime = startTime;
-            this.endTime = endTime;
+        private ScheduleDto(Builder builder) {
+            this.id = builder.id;
+            this.groupName = builder.groupName;
+            this.auditoriumNumber = builder.auditoriumNumber;
+            this.subjectName = builder.subjectName;
+            this.instructorName = builder.instructorName;
+            this.dayOfWeek = builder.dayOfWeek;
+            this.numSubgroup = builder.numSubgroup;
+            this.weekNumber = builder.weekNumber;
+            this.startTime = builder.startTime;
+            this.endTime = builder.endTime;
+        }
+
+        public static class Builder {
+            private Long id;
+            private String groupName;
+            private String auditoriumNumber;
+            private String subjectName;
+            private String instructorName;
+            private String dayOfWeek;
+            private int numSubgroup;
+            private int weekNumber;
+            private String startTime;
+            private String endTime;
+
+            public Builder() {
+            }
+
+            public Builder setId(Long id) {
+                this.id = id;
+                return this;
+            }
+
+            public Builder setGroupName(String groupName) {
+                this.groupName = groupName;
+                return this;
+            }
+
+            public Builder setAuditoriumNumber(String auditoriumNumber) {
+                this.auditoriumNumber = auditoriumNumber;
+                return this;
+            }
+
+            public Builder setSubjectName(String subjectName) {
+                this.subjectName = subjectName;
+                return this;
+            }
+
+            public Builder setInstructorName(String instructorName) {
+                this.instructorName = instructorName;
+                return this;
+            }
+
+            public Builder setDayOfWeek(String dayOfWeek) {
+                this.dayOfWeek = dayOfWeek;
+                return this;
+            }
+
+            public Builder setNumSubgroup(int numSubgroup) {
+                this.numSubgroup = numSubgroup;
+                return this;
+            }
+
+            public Builder setWeekNumber(int weekNumber) {
+                this.weekNumber = weekNumber;
+                return this;
+            }
+
+            public Builder setStartTime(String startTime) {
+                this.startTime = startTime;
+                return this;
+            }
+
+            public Builder setEndTime(String endTime) {
+                this.endTime = endTime;
+                return this;
+            }
+
+            public ScheduleDto build() {
+                return new ScheduleDto(this);
+            }
         }
 
         public Long getId() {
