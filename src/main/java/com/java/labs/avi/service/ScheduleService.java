@@ -120,21 +120,21 @@ public class ScheduleService {
         }
         return DEFAULT_VALUE;
     }
-
     public List<ScheduleDto> convertToDto(List<Schedule> schedules) {
         return schedules.stream().distinct().map(schedule ->
-                new ScheduleDto.Builder()
-                        .setId(schedule.getId())
-                        .setGroupName(schedule.getGroup().getName())
-                        .setAuditoriumNumber(schedule.getAuditorium().getNumber())
-                        .setSubjectName(schedule.getSubject().getName())
-                        .setInstructorName(schedule.getInstructor().getName())
-                        .setDayOfWeek(schedule.getDayOfWeek())
-                        .setNumSubgroup(schedule.getNumSubgroup())
-                        .setWeekNumber(schedule.getWeekNumber())
-                        .setStartTime(schedule.getStartTime())
-                        .setEndTime(schedule.getEndTime())
-                        .build()
+                new ScheduleDto(
+                        schedule.getId(),
+                        schedule.getGroup().getName(),
+                        schedule.getAuditorium().getNumber(),
+                        schedule.getSubject().getName(),
+                        schedule.getInstructor().getName(),
+                        schedule.getDayOfWeek(),
+                        schedule.getNumSubgroup(),
+                        schedule.getWeekNumber(),
+                        schedule.getStartTime(),
+                        schedule.getEndTime()
+                )
         ).toList();
     }
+
 }
