@@ -1,6 +1,8 @@
 package com.java.labs.avi.service;
 
+import com.java.labs.avi.dto.CourseInfoDto;
 import com.java.labs.avi.dto.ScheduleDto;
+import com.java.labs.avi.dto.ScheduleInfoDto;
 import com.java.labs.avi.model.*;
 import com.java.labs.avi.repository.*;
 import org.json.JSONArray;
@@ -121,20 +123,25 @@ public class ScheduleService {
         return DEFAULT_VALUE;
     }
     public List<ScheduleDto> convertToDto(List<Schedule> schedules) {
-        return schedules.stream().distinct().map(schedule ->
-                new ScheduleDto(
-                        schedule.getId(),
-                        schedule.getGroup().getName(),
-                        schedule.getAuditorium().getNumber(),
-                        schedule.getSubject().getName(),
-                        schedule.getInstructor().getName(),
-                        schedule.getDayOfWeek(),
-                        schedule.getNumSubgroup(),
-                        schedule.getWeekNumber(),
-                        schedule.getStartTime(),
-                        schedule.getEndTime()
-                )
-        ).toList();
+        return schedules.stream()
+                .distinct()
+                .map(schedule -> {
+                    CourseInfoDto courseInfo = new CourseInfoDto(
+                            schedule.getGroup().getName(),
+                            schedule.getAuditorium().getNumber(),
+                            schedule.getSubject().getName(),
+                            schedule.getInstructor().getName()
+                    );
+                    ScheduleInfoDto scheduleInfo = new ScheduleInfoDto(
+                            schedule.getDayOfWeek(),
+                            schedule.getNumSubgroup(),
+                            schedule.getWeekNumber(),
+                            schedule.getStartTime(),
+                            schedule.getEndTime()
+                    );
+                    return new ScheduleDto(schedule.getId(), courseInfo, scheduleInfo);
+                })
+                .toList();
     }
 
 }
