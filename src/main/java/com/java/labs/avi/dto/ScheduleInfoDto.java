@@ -1,57 +1,57 @@
 package com.java.labs.avi.dto;
 
 public class ScheduleInfoDto {
-    private String dayOfWeek;
-    private int numSubgroup;
-    private int weekNumber;
-    private String startTime;
-    private String endTime;
+    private String weekday;
+    private int subgroupIndex;
+    private int weekOrdinal;
+    private String sessionStart;
+    private String sessionEnd;
 
-    public String getDayOfWeek() {
-        return dayOfWeek;
+    public String getWeekday() {
+        return weekday;
     }
 
-    public void setDayOfWeek(String dayOfWeek) {
-        this.dayOfWeek = dayOfWeek;
+    public void setWeekday(String weekday) {
+        this.weekday = weekday;
     }
 
-    public int getNumSubgroup() {
-        return numSubgroup;
+    public int getSubgroupIndex() {
+        return subgroupIndex;
     }
 
-    public void setNumSubgroup(int numSubgroup) {
-        this.numSubgroup = numSubgroup;
+    public void setSubgroupIndex(int subgroupIndex) {
+        this.subgroupIndex = subgroupIndex;
     }
 
-    public int getWeekNumber() {
-        return weekNumber;
+    public int getWeekOrdinal() {
+        return weekOrdinal;
     }
 
-    public void setWeekNumber(int weekNumber) {
-        this.weekNumber = weekNumber;
+    public void setWeekOrdinal(int weekOrdinal) {
+        this.weekOrdinal = weekOrdinal;
     }
 
-    public String getStartTime() {
-        return startTime;
+    public String getSessionStart() {
+        return sessionStart;
     }
 
-    public void setStartTime(String startTime) {
-        this.startTime = startTime;
+    public void setSessionStart(String sessionStart) {
+        this.sessionStart = sessionStart;
     }
 
-    public String getEndTime() {
-        return endTime;
+    public String getSessionEnd() {
+        return sessionEnd;
     }
 
-    public void setEndTime(String endTime) {
-        this.endTime = endTime;
+    public void setSessionEnd(String sessionEnd) {
+        this.sessionEnd = sessionEnd;
     }
 
-    public ScheduleInfoDto(String dayOfWeek, int numSubgroup, int weekNumber, String startTime, String endTime) {
-        this.dayOfWeek = dayOfWeek;
-        this.numSubgroup = numSubgroup;
-        this.weekNumber = weekNumber;
-        this.startTime = startTime;
-        this.endTime = endTime;
+    public ScheduleInfoDto(String weekday, int subgroupIndex, int weekOrdinal, String sessionStart, String sessionEnd) {
+        this.weekday = weekday;
+        this.subgroupIndex = subgroupIndex;
+        this.weekOrdinal = weekOrdinal;
+        this.sessionStart = sessionStart;
+        this.sessionEnd = sessionEnd;
     }
 }

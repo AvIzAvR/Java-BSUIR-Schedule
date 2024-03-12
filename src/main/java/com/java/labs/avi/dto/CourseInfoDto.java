@@ -1,47 +1,47 @@
 package com.java.labs.avi.dto;
 
 public class CourseInfoDto {
-    private String groupName;
-    private String auditoriumNumber;
-    private String subjectName;
-    private String instructorName;
+    private String classGroup;
+    private String roomNumber;
+    private String courseTitle;
+    private String lecturer;
 
-    public String getGroupName() {
-        return groupName;
+    public String getClassGroup() {
+        return classGroup;
     }
 
-    public void setGroupName(String groupName) {
-        this.groupName = groupName;
+    public void setClassGroup(String classGroup) {
+        this.classGroup = classGroup;
     }
 
-    public String getAuditoriumNumber() {
-        return auditoriumNumber;
+    public String getRoomNumber() {
+        return roomNumber;
     }
 
-    public void setAuditoriumNumber(String auditoriumNumber) {
-        this.auditoriumNumber = auditoriumNumber;
+    public void setRoomNumber(String roomNumber) {
+        this.roomNumber = roomNumber;
     }
 
-    public String getSubjectName() {
-        return subjectName;
+    public String getCourseTitle() {
+        return courseTitle;
     }
 
-    public void setSubjectName(String subjectName) {
-        this.subjectName = subjectName;
+    public void setCourseTitle(String courseTitle) {
+        this.courseTitle = courseTitle;
     }
 
-    public String getInstructorName() {
-        return instructorName;
+    public String getLecturer() {
+        return lecturer;
     }
 
-    public void setInstructorName(String instructorName) {
-        this.instructorName = instructorName;
+    public void setLecturer(String lecturer) {
+        this.lecturer = lecturer;
     }
 
-    public CourseInfoDto(String groupName, String auditoriumNumber, String subjectName, String instructorName) {
-        this.groupName = groupName;
-        this.auditoriumNumber = auditoriumNumber;
-        this.subjectName = subjectName;
-        this.instructorName = instructorName;
+    public CourseInfoDto(String classGroup, String roomNumber, String courseTitle, String lecturer) {
+        this.classGroup = classGroup;
+        this.roomNumber = roomNumber;
+        this.courseTitle = courseTitle;
+        this.lecturer = lecturer;
     }
 }
