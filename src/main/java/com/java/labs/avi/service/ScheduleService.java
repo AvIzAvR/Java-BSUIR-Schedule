@@ -236,13 +236,10 @@ public class ScheduleService {
                 .orElseThrow(() -> new RuntimeException("Schedule not found for the id: " + id));
 
         updates.forEach((key, value) -> {
-            switch (key) {
-                case "startTime":
-                    schedule.setStartTime((String) value);
-                    break;
-                case "endTime":
-                    schedule.setEndTime((String) value);
-                    break;
+            if ("startTime".equals(key)) {
+                schedule.setStartTime((String) value);
+            } else if ("endTime".equals(key)) {
+                schedule.setEndTime((String) value);
             }
         });
 
