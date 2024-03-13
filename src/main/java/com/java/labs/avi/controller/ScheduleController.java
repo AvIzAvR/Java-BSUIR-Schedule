@@ -1,18 +1,17 @@
 package com.java.labs.avi.controller;
 
 import com.java.labs.avi.dto.ScheduleDto;
+import com.java.labs.avi.model.Schedule;
 import com.java.labs.avi.service.ScheduleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/schedule")
@@ -38,4 +37,27 @@ public class ScheduleController {
             }
             return new ResponseEntity<>(scheduleDtos, HttpStatus.OK);
     }
+    @PostMapping
+    public ResponseEntity<Schedule> createSchedule(@RequestBody Schedule schedule) {
+        return new ResponseEntity<>(scheduleService.createSchedule(schedule), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ScheduleDto> updateSchedule(@PathVariable Long id, @RequestBody ScheduleDto scheduleDetails) {
+        ScheduleDto updatedScheduleDto = scheduleService.updateSchedule(id, scheduleDetails);
+        return ResponseEntity.ok(updatedScheduleDto);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<HttpStatus> deleteSchedule(@PathVariable Long id) {
+        scheduleService.deleteSchedule(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<ScheduleDto> patchSchedule(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
+        ScheduleDto updatedScheduleDto = scheduleService.patchSchedule(id, updates);
+        return ResponseEntity.ok(updatedScheduleDto);
+    }
+
 }

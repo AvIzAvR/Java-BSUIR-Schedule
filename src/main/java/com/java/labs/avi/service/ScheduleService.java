@@ -5,12 +5,15 @@ import com.java.labs.avi.dto.ScheduleDto;
 import com.java.labs.avi.dto.ScheduleInfoDto;
 import com.java.labs.avi.model.*;
 import com.java.labs.avi.repository.*;
+import jakarta.transaction.Transactional;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
 import java.util.*;
+import java.util.stream.IntStream;
 
 @Service
 public class ScheduleService {
@@ -36,6 +39,9 @@ public class ScheduleService {
     private static final String DEFAULT_VALUE = "не указано";
 
     public List<ScheduleDto> getScheduleByGroupDayWeekAndSubgroup(String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) {
+        if (targetWeekNumber < 1 || targetWeekNumber > 4) {
+            throw new IllegalArgumentException("TargetWeekNumber must be between 1 and 4");
+        }
         String jsonResponse = fetchScheduleJson(groupNumber);
         JSONObject jsonObject = new JSONObject(jsonResponse);
         JSONArray daySchedules = jsonObject.getJSONObject("schedules").getJSONArray(dayOfWeek);
@@ -52,11 +58,24 @@ public class ScheduleService {
         List<Schedule> schedules = new ArrayList<>();
         for (int i = 0; i < schedulesJson.length(); i++) {
             JSONObject scheduleJson = schedulesJson.getJSONObject(i);
-            Schedule schedule = processScheduleData(scheduleJson, groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
-            schedules.add(schedule);
+            if (isValidForWeekAndSubgroup(scheduleJson, targetWeekNumber, numSubgroup)) {
+                Schedule schedule = processScheduleData(scheduleJson, groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
+                schedules.add(schedule);
+            }
         }
         return schedules;
     }
+
+    protected boolean isValidForWeekAndSubgroup(JSONObject scheduleJson, int targetWeekNumber, int numSubgroup) {
+        JSONArray weekNumbers = scheduleJson.optJSONArray("weekNumber");
+        int subgroup = scheduleJson.optInt("subgroup");
+
+        boolean isWeekValid = weekNumbers != null && IntStream.range(0, weekNumbers.length()).anyMatch(i -> weekNumbers.getInt(i) == targetWeekNumber);
+        boolean isSubgroupValid = (numSubgroup == 0) || (subgroup == numSubgroup);
+
+        return isWeekValid && isSubgroupValid;
+    }
+
 
     protected Schedule processScheduleData(JSONObject scheduleJson, String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) throws JSONException {
         String subjectName = scheduleJson.optString("subjectFullName", DEFAULT_VALUE);
@@ -64,6 +83,7 @@ public class ScheduleService {
         String instructorFullName = extractInstructorFullName(scheduleJson);
         String startTime = scheduleJson.optString("startLessonTime", DEFAULT_VALUE);
         String endTime = scheduleJson.optString("endLessonTime", DEFAULT_VALUE);
+        int actualSubgroup = scheduleJson.optInt("subgroup", 0);
 
         Auditorium auditorium = auditoriumRepository.findByNumber(auditoryName)
                 .orElseGet(() -> auditoriumRepository.save(new Auditorium(auditoryName)));
@@ -102,7 +122,7 @@ public class ScheduleService {
             newSchedule.setSubject(subject);
             newSchedule.setInstructor(instructor);
             newSchedule.setDayOfWeek(dayOfWeek);
-            newSchedule.setNumSubgroup(numSubgroup);
+            newSchedule.setNumSubgroup(actualSubgroup);
             newSchedule.setWeekNumber(targetWeekNumber);
             newSchedule.setStartTime(startTime);
             newSchedule.setEndTime(endTime);
@@ -122,6 +142,7 @@ public class ScheduleService {
         }
         return DEFAULT_VALUE;
     }
+
     public List<ScheduleDto> convertToDto(List<Schedule> schedules) {
         return schedules.stream()
                 .distinct()
@@ -142,6 +163,105 @@ public class ScheduleService {
                     return new ScheduleDto(schedule.getId(), courseInfo, scheduleInfo);
                 })
                 .toList();
+    }
+
+    public Schedule createSchedule(Schedule schedule) {
+        return scheduleRepository.save(schedule);
+    }
+
+    public List<Schedule> getAllSchedules() {
+        return scheduleRepository.findAll();
+    }
+
+    @Transactional
+    public ScheduleDto updateSchedule(Long scheduleId, ScheduleDto scheduleDto) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new RuntimeException("Schedule not found for the id: " + scheduleId));
+
+
+        Auditorium auditorium = auditoriumRepository.findByNumber(scheduleDto.getCourseInfo().getRoomNumber())
+                .orElse(auditoriumRepository.save(new Auditorium(scheduleDto.getCourseInfo().getRoomNumber())));
+
+        Group group = groupRepository.findByName(scheduleDto.getCourseInfo().getClassGroup())
+                .orElseGet(() -> {
+                    Group newGroup = new Group(scheduleDto.getCourseInfo().getClassGroup());
+                    newGroup.setAuditorium(auditorium);
+                    return groupRepository.save(newGroup);
+                });
+
+        Subject subject = subjectRepository.findByName(scheduleDto.getCourseInfo().getCourseTitle())
+                .orElse(subjectRepository.save(new Subject(scheduleDto.getCourseInfo().getCourseTitle())));
+
+        Instructor instructor = instructorRepository.findByName(scheduleDto.getCourseInfo().getLecturer())
+                .orElse(instructorRepository.save(new Instructor(scheduleDto.getCourseInfo().getLecturer())));
+
+        schedule.setGroup(group);
+        schedule.setAuditorium(auditorium);
+        schedule.setSubject(subject);
+        schedule.setInstructor(instructor);
+
+        schedule.setDayOfWeek(scheduleDto.getScheduleInfo().getWeekday());
+        schedule.setNumSubgroup(scheduleDto.getScheduleInfo().getSubgroupIndex());
+        schedule.setWeekNumber(scheduleDto.getScheduleInfo().getWeekOrdinal());
+        schedule.setStartTime(scheduleDto.getScheduleInfo().getSessionStart());
+        schedule.setEndTime(scheduleDto.getScheduleInfo().getSessionEnd());
+
+        schedule = scheduleRepository.save(schedule);
+
+        CourseInfoDto courseInfoDto = new CourseInfoDto(
+                group.getName(),
+                auditorium.getNumber(),
+                subject.getName(),
+                instructor.getName());
+
+        ScheduleInfoDto scheduleInfoDto = new ScheduleInfoDto(
+                schedule.getDayOfWeek(),
+                schedule.getNumSubgroup(),
+                schedule.getWeekNumber(),
+                schedule.getStartTime(),
+                schedule.getEndTime());
+
+        return new ScheduleDto(schedule.getId(), courseInfoDto, scheduleInfoDto);
+    }
+
+    public void deleteSchedule(Long id) {
+        Schedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Schedule not found for this id :: " + id));
+        scheduleRepository.delete(schedule);
+    }
+
+    @Transactional
+    public ScheduleDto patchSchedule(Long id, Map<String, Object> updates) {
+        Schedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Schedule not found for the id: " + id));
+
+        updates.forEach((key, value) -> {
+            switch (key) {
+                case "startTime":
+                    schedule.setStartTime((String) value);
+                    break;
+                case "endTime":
+                    schedule.setEndTime((String) value);
+                    break;
+            }
+        });
+
+        Schedule updatedSchedule = scheduleRepository.save(schedule);
+
+        CourseInfoDto courseInfoDto = new CourseInfoDto(
+                updatedSchedule.getGroup().getName(),
+                updatedSchedule.getAuditorium().getNumber(),
+                updatedSchedule.getSubject().getName(),
+                updatedSchedule.getInstructor().getName());
+
+        ScheduleInfoDto scheduleInfoDto = new ScheduleInfoDto(
+                updatedSchedule.getDayOfWeek(),
+                updatedSchedule.getNumSubgroup(),
+                updatedSchedule.getWeekNumber(),
+                updatedSchedule.getStartTime(),
+                updatedSchedule.getEndTime());
+
+        return new ScheduleDto(updatedSchedule.getId(), courseInfoDto, scheduleInfoDto);
     }
 
 }
