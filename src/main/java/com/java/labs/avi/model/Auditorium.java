@@ -1,6 +1,7 @@
 package com.java.labs.avi.model;
 
 import jakarta.persistence.*;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -10,6 +11,7 @@ public class Auditorium {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String number;
+
     public Auditorium(String auditoryName) {
         this.number = auditoryName;
     }
@@ -17,6 +19,7 @@ public class Auditorium {
     public Auditorium() {
 
     }
+
     @OneToMany(mappedBy = "auditorium")
     private Set<Group> groups = new HashSet<>();
 

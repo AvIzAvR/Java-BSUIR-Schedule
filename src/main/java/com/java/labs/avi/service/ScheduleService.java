@@ -261,4 +261,19 @@ public class ScheduleService {
         return new ScheduleDto(updatedSchedule.getId(), courseInfoDto, scheduleInfoDto);
     }
 
+    public void deleteAuditorium(Long id) {
+        List<Schedule> schedules = scheduleRepository.findByAuditoriumId(id); // Найти все расписания с этой аудиторией
+        scheduleRepository.deleteAll(schedules); // Удалить найденные расписания
+        auditoriumRepository.deleteById(id); // Удалить аудиторию
+    }
+
+
+    public void deleteGroup(Long id) {
+        groupRepository.deleteById(id);
+    }
+
+    public void deleteSubject(Long id) {
+        subjectRepository.deleteById(id);
+    }
+
 }

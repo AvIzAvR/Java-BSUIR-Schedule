@@ -1,5 +1,7 @@
 package com.java.labs.avi.model;
+
 import jakarta.persistence.*;
+
 import java.util.HashSet;
 import java.util.Set;
 

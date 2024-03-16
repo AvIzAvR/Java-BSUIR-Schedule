@@ -30,13 +30,14 @@ public class ScheduleController {
                                                                      @RequestParam String dayOfWeek,
                                                                      @RequestParam int targetWeekNumber,
                                                                      @RequestParam int numSubgroup) {
-            List<ScheduleDto> scheduleDtos = scheduleService.getScheduleByGroupDayWeekAndSubgroup(groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
-            if(scheduleDtos.isEmpty()) {
-                log.info("No schedules found for the given parameters.");
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            return new ResponseEntity<>(scheduleDtos, HttpStatus.OK);
+        List<ScheduleDto> scheduleDtos = scheduleService.getScheduleByGroupDayWeekAndSubgroup(groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
+        if (scheduleDtos.isEmpty()) {
+            log.info("No schedules found for the given parameters.");
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(scheduleDtos, HttpStatus.OK);
     }
+
     @PostMapping
     public ResponseEntity<Schedule> createSchedule(@RequestBody Schedule schedule) {
         return new ResponseEntity<>(scheduleService.createSchedule(schedule), HttpStatus.CREATED);
@@ -58,6 +59,24 @@ public class ScheduleController {
     public ResponseEntity<ScheduleDto> patchSchedule(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
         ScheduleDto updatedScheduleDto = scheduleService.patchSchedule(id, updates);
         return ResponseEntity.ok(updatedScheduleDto);
+    }
+
+    @DeleteMapping("/auditorium/{id}")
+    public ResponseEntity<HttpStatus> deleteAuditorium(@PathVariable Long id) {
+        scheduleService.deleteAuditorium(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @DeleteMapping("/group/{id}")
+    public ResponseEntity<HttpStatus> deleteGroup(@PathVariable Long id) {
+        scheduleService.deleteGroup(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @DeleteMapping("/subject/{id}")
+    public ResponseEntity<HttpStatus> deleteSubject(@PathVariable Long id) {
+        scheduleService.deleteSubject(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
 }
