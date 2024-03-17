@@ -26,6 +26,7 @@ public class ScheduleService {
     private final AuditoriumRepository auditoriumRepository;
     private final RestTemplate restTemplate;
     private final ScheduleCache scheduleCache;
+
     public ScheduleService(ScheduleRepository scheduleRepository, SubjectRepository subjectRepository,
                            InstructorRepository instructorRepository, GroupRepository groupRepository,
                            AuditoriumRepository auditoriumRepository, RestTemplate restTemplate, ScheduleCache scheduleCache) {
@@ -66,9 +67,12 @@ public class ScheduleService {
                 schedules.add(schedule);
             }
         }
+
         for (Schedule schedule : schedules) {
-            scheduleCache.put(schedule.getId(), schedule);
+            ScheduleDto scheduleDto = convertToDto(Arrays.asList(schedule)).get(0); // Конвертация в DTO
+            scheduleCache.put(scheduleDto.getId(), scheduleDto); // Кэширование DTO
         }
+
         return schedules;
     }
 
@@ -172,10 +176,11 @@ public class ScheduleService {
                 .toList();
     }
 
-    public Schedule createSchedule(Schedule schedule) {
+    public ScheduleDto createSchedule(Schedule schedule) {
         Schedule savedSchedule = scheduleRepository.save(schedule);
-        scheduleCache.put(savedSchedule.getId(), savedSchedule);
-        return savedSchedule;
+        ScheduleDto savedScheduleDto = convertToDto(Collections.singletonList(savedSchedule)).get(0);
+        scheduleCache.put(savedSchedule.getId(), savedScheduleDto);
+        return savedScheduleDto;
     }
 
     public List<Schedule> getAllSchedules() {
@@ -184,74 +189,40 @@ public class ScheduleService {
 
     @Transactional
     public ScheduleDto updateSchedule(Long scheduleId, ScheduleDto scheduleDto) {
-        Schedule schedule = findById(scheduleId);
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new RuntimeException("Schedule not found for this id :: " + scheduleId));
 
-        Auditorium auditorium = auditoriumRepository.findByNumber(scheduleDto.getCourseInfo().getRoomNumber())
-                .orElse(auditoriumRepository.save(new Auditorium(scheduleDto.getCourseInfo().getRoomNumber())));
+        Auditorium auditorium = auditoriumRepository
+                .findByNumber(scheduleDto.getCourseInfo().getRoomNumber())
+                .orElseGet(() -> auditoriumRepository.save(new Auditorium(scheduleDto.getCourseInfo().getRoomNumber())));
 
-        Group group = groupRepository.findByName(scheduleDto.getCourseInfo().getClassGroup())
+        Group group = groupRepository
+                .findByName(scheduleDto.getCourseInfo().getClassGroup())
                 .orElseGet(() -> {
                     Group newGroup = new Group(scheduleDto.getCourseInfo().getClassGroup());
                     newGroup.setAuditorium(auditorium);
                     return groupRepository.save(newGroup);
                 });
 
-        Subject subject = subjectRepository.findByName(scheduleDto.getCourseInfo().getCourseTitle())
-                .orElse(subjectRepository.save(new Subject(scheduleDto.getCourseInfo().getCourseTitle())));
+        Subject subject = subjectRepository
+                .findByName(scheduleDto.getCourseInfo().getCourseTitle())
+                .orElseGet(() -> subjectRepository.save(new Subject(scheduleDto.getCourseInfo().getCourseTitle())));
 
-        Instructor instructor = instructorRepository.findByName(scheduleDto.getCourseInfo().getLecturer())
-                .orElse(instructorRepository.save(new Instructor(scheduleDto.getCourseInfo().getLecturer())));
+        Instructor instructor = instructorRepository
+                .findByName(scheduleDto.getCourseInfo().getLecturer())
+                .orElseGet(() -> instructorRepository.save(new Instructor(scheduleDto.getCourseInfo().getLecturer())));
 
         schedule.setGroup(group);
         schedule.setAuditorium(auditorium);
         schedule.setSubject(subject);
         schedule.setInstructor(instructor);
-
         schedule.setDayOfWeek(scheduleDto.getScheduleInfo().getWeekday());
         schedule.setNumSubgroup(scheduleDto.getScheduleInfo().getSubgroupIndex());
         schedule.setWeekNumber(scheduleDto.getScheduleInfo().getWeekOrdinal());
         schedule.setStartTime(scheduleDto.getScheduleInfo().getSessionStart());
         schedule.setEndTime(scheduleDto.getScheduleInfo().getSessionEnd());
 
-        schedule = scheduleRepository.save(schedule);
-        scheduleCache.put(schedule.getId(), schedule);
-
-        CourseInfoDto courseInfoDto = new CourseInfoDto(
-                group.getName(),
-                auditorium.getNumber(),
-                subject.getName(),
-                instructor.getName());
-
-        ScheduleInfoDto scheduleInfoDto = new ScheduleInfoDto(
-                schedule.getDayOfWeek(),
-                schedule.getNumSubgroup(),
-                schedule.getWeekNumber(),
-                schedule.getStartTime(),
-                schedule.getEndTime());
-        return new ScheduleDto(schedule.getId(), courseInfoDto, scheduleInfoDto);
-    }
-
-    public void deleteSchedule(Long id) {
-        Schedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Schedule not found for this id :: " + id));
-        scheduleRepository.delete(schedule);
-        scheduleCache.delete(id);
-    }
-
-    @Transactional
-    public ScheduleDto patchSchedule(Long id, Map<String, Object> updates) {
-        Schedule schedule = findById(id);
-
-        updates.forEach((key, value) -> {
-            if ("startTime".equals(key)) {
-                schedule.setStartTime((String) value);
-            } else if ("endTime".equals(key)) {
-                schedule.setEndTime((String) value);
-            }
-        });
-
         Schedule updatedSchedule = scheduleRepository.save(schedule);
-        scheduleCache.put(schedule.getId(), updatedSchedule);
 
         CourseInfoDto courseInfoDto = new CourseInfoDto(
                 updatedSchedule.getGroup().getName(),
@@ -269,6 +240,50 @@ public class ScheduleService {
         return new ScheduleDto(updatedSchedule.getId(), courseInfoDto, scheduleInfoDto);
     }
 
+
+    public void deleteSchedule(Long id) {
+        Schedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Schedule not found for this id :: " + id));
+        scheduleRepository.delete(schedule);
+        scheduleCache.delete(id);
+    }
+
+    @Transactional
+    public ScheduleDto patchSchedule(Long id, Map<String, Object> updates) {
+        Schedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Schedule not found for this id :: " + id));
+
+        updates.forEach((key, value) -> {
+            if ("startTime".equals(key)) {
+                schedule.setStartTime((String) value);
+            } else if ("endTime".equals(key)) {
+                schedule.setEndTime((String) value);
+            }
+        });
+
+        Schedule updatedSchedule = scheduleRepository.save(schedule);
+        CourseInfoDto courseInfoDto = new CourseInfoDto(
+                updatedSchedule.getGroup().getName(),
+                updatedSchedule.getAuditorium().getNumber(),
+                updatedSchedule.getSubject().getName(),
+                updatedSchedule.getInstructor().getName());
+
+        ScheduleInfoDto scheduleInfoDto = new ScheduleInfoDto(
+                updatedSchedule.getDayOfWeek(),
+                updatedSchedule.getNumSubgroup(),
+                updatedSchedule.getWeekNumber(),
+                updatedSchedule.getStartTime(),
+                updatedSchedule.getEndTime());
+
+        Schedule updatedSchedules = scheduleRepository.save(schedule);
+
+        ScheduleDto updatedScheduleDto = convertToDto(Collections.singletonList(updatedSchedules)).get(0);
+
+        scheduleCache.put(updatedSchedules.getId(), updatedScheduleDto);
+
+        return updatedScheduleDto;
+    }
+
     public void deleteAuditorium(Long id) {
         List<Schedule> schedules = scheduleRepository.findByAuditoriumId(id);
         scheduleRepository.deleteAll(schedules);
@@ -284,19 +299,63 @@ public class ScheduleService {
         subjectRepository.deleteById(id);
     }
 
-    public Schedule findById(Long id) {
-        Schedule schedule = scheduleCache.get(id);
-        if (schedule == null) {
-            schedule = scheduleRepository.findById(id).orElseThrow(() -> new RuntimeException("Schedule not found for the id: " + id));
-            if (schedule != null) {
-                scheduleCache.put(id, schedule);
-            }
+    public ScheduleDto findById(Long id) {
+        ScheduleDto scheduleDto = scheduleCache.get(id);
+        if (scheduleDto == null) {
+            Schedule schedule = scheduleRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Schedule not found for the id: " + id));
+            scheduleDto = convertToDto(Collections.singletonList(schedule)).get(0);
+            scheduleCache.put(id, scheduleDto); // Обновление кеша с DTO
         }
-        return schedule;
+        return scheduleDto;
     }
 
     @Transactional
-    public Map<Long, Schedule> viewCache() {
+    public Map<Long, ScheduleDto> viewCache() {
         return scheduleCache.getCacheContents();
     }
+
+    public Schedule convertToEntity(ScheduleDto scheduleDto) {
+        Schedule schedule;
+        if (scheduleDto.getId() != null) {
+            schedule = scheduleRepository.findById(scheduleDto.getId())
+                    .orElse(new Schedule());
+        } else {
+            schedule = new Schedule();
+        }
+
+        Auditorium auditorium = auditoriumRepository
+                .findByNumber(scheduleDto.getCourseInfo().getRoomNumber())
+                .orElseGet(() -> auditoriumRepository.save(new Auditorium(scheduleDto.getCourseInfo().getRoomNumber())));
+
+        Group group = groupRepository
+                .findByName(scheduleDto.getCourseInfo().getClassGroup())
+                .orElseGet(() -> groupRepository.save(new Group(scheduleDto.getCourseInfo().getClassGroup())));
+
+        Instructor instructor = instructorRepository
+                .findByName(scheduleDto.getCourseInfo().getLecturer())
+                .orElseGet(() -> instructorRepository.save(new Instructor(scheduleDto.getCourseInfo().getLecturer())));
+
+        Subject subject = subjectRepository
+                .findByName(scheduleDto.getCourseInfo().getCourseTitle())
+                .orElseGet(() -> subjectRepository.save(new Subject(scheduleDto.getCourseInfo().getCourseTitle())));
+
+        schedule.setAuditorium(auditorium);
+        schedule.setGroup(group);
+        schedule.setInstructor(instructor);
+        schedule.setSubject(subject);
+
+        ScheduleInfoDto scheduleInfo = scheduleDto.getScheduleInfo();
+        if (scheduleInfo != null) {
+            schedule.setDayOfWeek(scheduleInfo.getWeekday());
+            schedule.setNumSubgroup(scheduleInfo.getSubgroupIndex());
+            schedule.setWeekNumber(scheduleInfo.getWeekOrdinal());
+            schedule.setStartTime(scheduleInfo.getSessionStart());
+            schedule.setEndTime(scheduleInfo.getSessionEnd());
+        }
+
+        return schedule;
+    }
+
 }
+

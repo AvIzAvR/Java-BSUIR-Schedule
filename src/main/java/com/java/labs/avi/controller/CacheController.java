@@ -1,5 +1,6 @@
 package com.java.labs.avi.controller;
 
+import com.java.labs.avi.dto.ScheduleDto;
 import com.java.labs.avi.model.Schedule;
 import com.java.labs.avi.service.ScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +21,8 @@ public class CacheController {
     }
 
     @GetMapping("/cache/schedules")
-    public ResponseEntity<Map<Long, Schedule>> getCacheContents() {
-        Map<Long, Schedule> cacheContents = scheduleService.viewCache();
+    public ResponseEntity<Map<Long, ScheduleDto>> getCacheContents() {
+        Map<Long, ScheduleDto> cacheContents = scheduleService.viewCache();
         return ResponseEntity.ok(cacheContents);
     }
 }

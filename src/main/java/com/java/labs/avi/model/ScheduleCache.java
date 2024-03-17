@@ -1,5 +1,6 @@
 package com.java.labs.avi.model;
 
+import com.java.labs.avi.dto.ScheduleDto;
 import org.springframework.stereotype.Component;
 import java.util.Collections;
 import java.util.HashMap;
@@ -8,20 +9,21 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class ScheduleCache {
-    private final Map<Long, Schedule> cache = new ConcurrentHashMap<>();
+    private final Map<Long, ScheduleDto> cache = new ConcurrentHashMap<>();
 
-    public Schedule get(Long id) {
+    public ScheduleDto get(Long id) {
         return cache.get(id);
     }
 
-    public void put(Long id, Schedule schedule) {
-        cache.put(id, schedule);
+    public void put(Long id, ScheduleDto scheduleDto) {
+        cache.put(id, scheduleDto);
     }
 
     public void delete(Long id) {
         cache.remove(id);
     }
 
-    public Map<Long, Schedule> getCacheContents() {
-        return new HashMap<>(cache);    }
+    public Map<Long, ScheduleDto> getCacheContents() {
+        return new HashMap<>(cache);
+    }
 }
