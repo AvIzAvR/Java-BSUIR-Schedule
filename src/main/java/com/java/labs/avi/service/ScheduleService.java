@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Service
@@ -29,6 +28,7 @@ public class ScheduleService {
     private final ScheduleCache scheduleCache;
 
     String notFound = "Schedule not found for this id :: ";
+
     public ScheduleService(ScheduleRepository scheduleRepository, SubjectRepository subjectRepository,
                            InstructorRepository instructorRepository, GroupRepository groupRepository,
                            AuditoriumRepository auditoriumRepository, RestTemplate restTemplate, ScheduleCache scheduleCache) {
@@ -159,27 +159,24 @@ public class ScheduleService {
     public List<ScheduleDto> convertToDto(List<Schedule> schedules) {
         return schedules.stream()
                 .distinct()
-                .map(schedule -> {
-                    return new ScheduleDto(
-                            schedule.getId(),
-                            new CourseInfoDto(
-                                    schedule.getGroup().getName(),
-                                    schedule.getAuditorium().getNumber(),
-                                    schedule.getSubject().getName(),
-                                    schedule.getInstructor().getName()
-                            ),
-                            new ScheduleInfoDto(
-                                    schedule.getDayOfWeek(),
-                                    schedule.getNumSubgroup(),
-                                    schedule.getWeekNumber(),
-                                    schedule.getStartTime(),
-                                    schedule.getEndTime()
-                            )
-                    );
-                })
+                .map(schedule -> new ScheduleDto(
+                        schedule.getId(),
+                        new CourseInfoDto(
+                                schedule.getGroup().getName(),
+                                schedule.getAuditorium().getNumber(),
+                                schedule.getSubject().getName(),
+                                schedule.getInstructor().getName()
+                        ),
+                        new ScheduleInfoDto(
+                                schedule.getDayOfWeek(),
+                                schedule.getNumSubgroup(),
+                                schedule.getWeekNumber(),
+                                schedule.getStartTime(),
+                                schedule.getEndTime()
+                        )
+                ))
                 .toList();
     }
-
 
 
     public ScheduleDto createSchedule(Schedule schedule) {
@@ -267,26 +264,9 @@ public class ScheduleService {
             }
         });
 
-        Schedule updatedSchedule = scheduleRepository.save(schedule);
-        CourseInfoDto courseInfoDto = new CourseInfoDto(
-                updatedSchedule.getGroup().getName(),
-                updatedSchedule.getAuditorium().getNumber(),
-                updatedSchedule.getSubject().getName(),
-                updatedSchedule.getInstructor().getName());
-
-        ScheduleInfoDto scheduleInfoDto = new ScheduleInfoDto(
-                updatedSchedule.getDayOfWeek(),
-                updatedSchedule.getNumSubgroup(),
-                updatedSchedule.getWeekNumber(),
-                updatedSchedule.getStartTime(),
-                updatedSchedule.getEndTime());
-
         Schedule updatedSchedules = scheduleRepository.save(schedule);
-
         ScheduleDto updatedScheduleDto = convertToDto(Collections.singletonList(updatedSchedules)).get(0);
-
         scheduleCache.put(updatedSchedules.getId(), updatedScheduleDto);
-
         return updatedScheduleDto;
     }
 
