@@ -1,5 +1,6 @@
 package com.java.labs.avi.service;
 
+import com.java.labs.avi.model.ScheduleCache;
 import com.java.labs.avi.dto.CourseInfoDto;
 import com.java.labs.avi.dto.ScheduleDto;
 import com.java.labs.avi.dto.ScheduleInfoDto;
@@ -23,16 +24,17 @@ public class ScheduleService {
     private final GroupRepository groupRepository;
     private final AuditoriumRepository auditoriumRepository;
     private final RestTemplate restTemplate;
-
+    private final ScheduleCache scheduleCache;
     public ScheduleService(ScheduleRepository scheduleRepository, SubjectRepository subjectRepository,
                            InstructorRepository instructorRepository, GroupRepository groupRepository,
-                           AuditoriumRepository auditoriumRepository, RestTemplate restTemplate) {
+                           AuditoriumRepository auditoriumRepository, RestTemplate restTemplate, ScheduleCache scheduleCache) {
         this.scheduleRepository = scheduleRepository;
         this.subjectRepository = subjectRepository;
         this.instructorRepository = instructorRepository;
         this.groupRepository = groupRepository;
         this.auditoriumRepository = auditoriumRepository;
         this.restTemplate = restTemplate;
+        this.scheduleCache = scheduleCache;
     }
 
 
@@ -166,7 +168,9 @@ public class ScheduleService {
     }
 
     public Schedule createSchedule(Schedule schedule) {
-        return scheduleRepository.save(schedule);
+        Schedule savedSchedule = scheduleRepository.save(schedule);
+        scheduleCache.put(savedSchedule.getId(), savedSchedule);
+        return savedSchedule;
     }
 
     public List<Schedule> getAllSchedules() {
@@ -175,9 +179,7 @@ public class ScheduleService {
 
     @Transactional
     public ScheduleDto updateSchedule(Long scheduleId, ScheduleDto scheduleDto) {
-        Schedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new RuntimeException("Schedule not found for the id: " + scheduleId));
-
+        Schedule schedule = findById(scheduleId);
 
         Auditorium auditorium = auditoriumRepository.findByNumber(scheduleDto.getCourseInfo().getRoomNumber())
                 .orElse(auditoriumRepository.save(new Auditorium(scheduleDto.getCourseInfo().getRoomNumber())));
@@ -207,6 +209,7 @@ public class ScheduleService {
         schedule.setEndTime(scheduleDto.getScheduleInfo().getSessionEnd());
 
         schedule = scheduleRepository.save(schedule);
+        scheduleCache.put(schedule.getId(), schedule);
 
         CourseInfoDto courseInfoDto = new CourseInfoDto(
                 group.getName(),
@@ -220,7 +223,6 @@ public class ScheduleService {
                 schedule.getWeekNumber(),
                 schedule.getStartTime(),
                 schedule.getEndTime());
-
         return new ScheduleDto(schedule.getId(), courseInfoDto, scheduleInfoDto);
     }
 
@@ -228,12 +230,12 @@ public class ScheduleService {
         Schedule schedule = scheduleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Schedule not found for this id :: " + id));
         scheduleRepository.delete(schedule);
+        scheduleCache.delete(id);
     }
 
     @Transactional
     public ScheduleDto patchSchedule(Long id, Map<String, Object> updates) {
-        Schedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Schedule not found for the id: " + id));
+        Schedule schedule = findById(id);
 
         updates.forEach((key, value) -> {
             if ("startTime".equals(key)) {
@@ -244,6 +246,7 @@ public class ScheduleService {
         });
 
         Schedule updatedSchedule = scheduleRepository.save(schedule);
+        scheduleCache.put(schedule.getId(), updatedSchedule);
 
         CourseInfoDto courseInfoDto = new CourseInfoDto(
                 updatedSchedule.getGroup().getName(),
@@ -262,9 +265,9 @@ public class ScheduleService {
     }
 
     public void deleteAuditorium(Long id) {
-        List<Schedule> schedules = scheduleRepository.findByAuditoriumId(id); // Найти все расписания с этой аудиторией
-        scheduleRepository.deleteAll(schedules); // Удалить найденные расписания
-        auditoriumRepository.deleteById(id); // Удалить аудиторию
+        List<Schedule> schedules = scheduleRepository.findByAuditoriumId(id);
+        scheduleRepository.deleteAll(schedules);
+        auditoriumRepository.deleteById(id);
     }
 
 
@@ -276,4 +279,18 @@ public class ScheduleService {
         subjectRepository.deleteById(id);
     }
 
+    public Schedule findById(Long id) {
+        Schedule schedule = scheduleCache.get(id);
+        if (schedule == null) {
+            schedule = scheduleRepository.findById(id).orElseThrow(() -> new RuntimeException("Schedule not found for the id: " + id));
+            if (schedule != null) {
+                scheduleCache.put(id, schedule);
+            }
+        }
+        return schedule;
+    }
+
+    public Map<Long, Schedule> viewCache() {
+        return scheduleCache.getCacheContents();
+    }
 }
