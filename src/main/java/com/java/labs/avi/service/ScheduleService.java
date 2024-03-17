@@ -7,6 +7,7 @@ import com.java.labs.avi.dto.ScheduleInfoDto;
 import com.java.labs.avi.model.*;
 import com.java.labs.avi.repository.*;
 import jakarta.transaction.Transactional;
+import org.hibernate.Hibernate;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -64,6 +65,9 @@ public class ScheduleService {
                 Schedule schedule = processScheduleData(scheduleJson, groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
                 schedules.add(schedule);
             }
+        }
+        for (Schedule schedule : schedules) {
+            scheduleCache.put(schedule.getId(), schedule);
         }
         return schedules;
     }
@@ -129,6 +133,7 @@ public class ScheduleService {
             newSchedule.setStartTime(startTime);
             newSchedule.setEndTime(endTime);
 
+            Hibernate.initialize(newSchedule.getInstructor().getSubjects());
             return scheduleRepository.save(newSchedule);
         }
     }
@@ -290,6 +295,7 @@ public class ScheduleService {
         return schedule;
     }
 
+    @Transactional
     public Map<Long, Schedule> viewCache() {
         return scheduleCache.getCacheContents();
     }
