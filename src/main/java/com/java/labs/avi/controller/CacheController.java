@@ -1,7 +1,6 @@
 package com.java.labs.avi.controller;
 
 import com.java.labs.avi.dto.ScheduleDto;
-import com.java.labs.avi.model.Schedule;
 import com.java.labs.avi.service.ScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

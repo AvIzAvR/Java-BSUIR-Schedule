@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Service
@@ -27,6 +28,7 @@ public class ScheduleService {
     private final RestTemplate restTemplate;
     private final ScheduleCache scheduleCache;
 
+    String notFound = "Schedule not found for this id :: ";
     public ScheduleService(ScheduleRepository scheduleRepository, SubjectRepository subjectRepository,
                            InstructorRepository instructorRepository, GroupRepository groupRepository,
                            AuditoriumRepository auditoriumRepository, RestTemplate restTemplate, ScheduleCache scheduleCache) {
@@ -171,10 +173,12 @@ public class ScheduleService {
                             schedule.getStartTime(),
                             schedule.getEndTime()
                     );
+                    // Используем обе переменные для создания ScheduleDto
                     return new ScheduleDto(schedule.getId(), courseInfo, scheduleInfo);
                 })
-                .toList();
+                .collect(Collectors.toList());
     }
+
 
     public ScheduleDto createSchedule(Schedule schedule) {
         Schedule savedSchedule = scheduleRepository.save(schedule);
@@ -190,7 +194,7 @@ public class ScheduleService {
     @Transactional
     public ScheduleDto updateSchedule(Long scheduleId, ScheduleDto scheduleDto) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new RuntimeException("Schedule not found for this id :: " + scheduleId));
+                .orElseThrow(() -> new RuntimeException(notFound + scheduleId));
 
         Auditorium auditorium = auditoriumRepository
                 .findByNumber(scheduleDto.getCourseInfo().getRoomNumber())
@@ -243,7 +247,7 @@ public class ScheduleService {
 
     public void deleteSchedule(Long id) {
         Schedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Schedule not found for this id :: " + id));
+                .orElseThrow(() -> new RuntimeException(notFound + id));
         scheduleRepository.delete(schedule);
         scheduleCache.delete(id);
     }
@@ -251,7 +255,7 @@ public class ScheduleService {
     @Transactional
     public ScheduleDto patchSchedule(Long id, Map<String, Object> updates) {
         Schedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Schedule not found for this id :: " + id));
+                .orElseThrow(() -> new RuntimeException(notFound + id));
 
         updates.forEach((key, value) -> {
             if ("startTime".equals(key)) {
@@ -305,7 +309,7 @@ public class ScheduleService {
             Schedule schedule = scheduleRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Schedule not found for the id: " + id));
             scheduleDto = convertToDto(Collections.singletonList(schedule)).get(0);
-            scheduleCache.put(id, scheduleDto); // Обновление кеша с DTO
+            scheduleCache.put(id, scheduleDto);
         }
         return scheduleDto;
     }
