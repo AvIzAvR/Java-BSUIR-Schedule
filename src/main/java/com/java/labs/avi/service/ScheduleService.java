@@ -160,24 +160,26 @@ public class ScheduleService {
         return schedules.stream()
                 .distinct()
                 .map(schedule -> {
-                    CourseInfoDto courseInfo = new CourseInfoDto(
-                            schedule.getGroup().getName(),
-                            schedule.getAuditorium().getNumber(),
-                            schedule.getSubject().getName(),
-                            schedule.getInstructor().getName()
+                    return new ScheduleDto(
+                            schedule.getId(),
+                            new CourseInfoDto(
+                                    schedule.getGroup().getName(),
+                                    schedule.getAuditorium().getNumber(),
+                                    schedule.getSubject().getName(),
+                                    schedule.getInstructor().getName()
+                            ),
+                            new ScheduleInfoDto(
+                                    schedule.getDayOfWeek(),
+                                    schedule.getNumSubgroup(),
+                                    schedule.getWeekNumber(),
+                                    schedule.getStartTime(),
+                                    schedule.getEndTime()
+                            )
                     );
-                    ScheduleInfoDto scheduleInfo = new ScheduleInfoDto(
-                            schedule.getDayOfWeek(),
-                            schedule.getNumSubgroup(),
-                            schedule.getWeekNumber(),
-                            schedule.getStartTime(),
-                            schedule.getEndTime()
-                    );
-                    // Используем обе переменные для создания ScheduleDto
-                    return new ScheduleDto(schedule.getId(), courseInfo, scheduleInfo);
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
+
 
 
     public ScheduleDto createSchedule(Schedule schedule) {
