@@ -11,10 +11,13 @@ import org.hibernate.Hibernate;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Service
@@ -26,8 +29,11 @@ public class ScheduleService {
     private final AuditoriumRepository auditoriumRepository;
     private final RestTemplate restTemplate;
     private final ScheduleCache scheduleCache;
+    private static final Logger logger = LoggerFactory.getLogger(ScheduleService.class);
 
-    String notFound = "Schedule not found for this id :: ";
+    public static final String notFound = "Schedule not found for this id :: ";
+    private static final String DEFAULT_VALUE = "не указано";
+
 
     public ScheduleService(ScheduleRepository scheduleRepository, SubjectRepository subjectRepository,
                            InstructorRepository instructorRepository, GroupRepository groupRepository,
@@ -41,18 +47,18 @@ public class ScheduleService {
         this.scheduleCache = scheduleCache;
     }
 
-
-    private static final String DEFAULT_VALUE = "не указано";
-
     public List<ScheduleDto> getScheduleByGroupDayWeekAndSubgroup(String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) {
-        if (targetWeekNumber < 1 || targetWeekNumber > 4) {
-            throw new IllegalArgumentException("TargetWeekNumber must be between 1 and 4");
+        logger.info("Fetching schedule for groupNumber: {}, dayOfWeek: {}, targetWeekNumber: {}, numSubgroup: {}", groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
+        try {
+            String jsonResponse = fetchScheduleJson(groupNumber);
+            JSONObject jsonObject = new JSONObject(jsonResponse);
+            JSONArray daySchedules = jsonObject.getJSONObject("schedules").getJSONArray(dayOfWeek);
+            List<Schedule> processedSchedules = processSchedules(daySchedules, groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
+            return convertToDto(processedSchedules);
+        } catch (Exception e) {
+            logger.error("Error fetching schedule: ", e);
+            return Collections.emptyList();
         }
-        String jsonResponse = fetchScheduleJson(groupNumber);
-        JSONObject jsonObject = new JSONObject(jsonResponse);
-        JSONArray daySchedules = jsonObject.getJSONObject("schedules").getJSONArray(dayOfWeek);
-        List<Schedule> processedSchedules = processSchedules(daySchedules, groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
-        return convertToDto(new ArrayList<>(new HashSet<>(processedSchedules))); // Ensure uniqueness
     }
 
     private String fetchScheduleJson(String groupNumber) {
@@ -62,17 +68,29 @@ public class ScheduleService {
 
     protected List<Schedule> processSchedules(JSONArray schedulesJson, String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) {
         List<Schedule> schedules = new ArrayList<>();
+        logger.info("Start processing schedules for groupNumber: {}, dayOfWeek: {}, targetWeekNumber: {}, numSubgroup: {}", groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
+
         for (int i = 0; i < schedulesJson.length(); i++) {
             JSONObject scheduleJson = schedulesJson.getJSONObject(i);
+            logger.info("Processing schedule JSON at index {}: {}", i, scheduleJson.toString());
+
             if (isValidForWeekAndSubgroup(scheduleJson, targetWeekNumber, numSubgroup)) {
                 Schedule schedule = processScheduleData(scheduleJson, groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
                 schedules.add(schedule);
+                logger.info("Added schedule for " + ": {}", numSubgroup);
+            } else {
+                logger.info("Schedule at index {} does not match the criteria.", i);
             }
         }
 
-        for (Schedule schedule : schedules) {
-            ScheduleDto scheduleDto = convertToDto(Arrays.asList(schedule)).get(0); // Конвертация в DTO
-            scheduleCache.put(scheduleDto.getId(), scheduleDto); // Кэширование DTO
+        if (schedules.isEmpty()) {
+            logger.warn("No schedules matched the criteria for groupNumber: {}, dayOfWeek: {}, targetWeekNumber: {}, numSubgroup: {}", groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
+        } else {
+            for (Schedule schedule : schedules) {
+                ScheduleDto scheduleDto = convertToDto(Arrays.asList(schedule)).get(0);
+                scheduleCache.put(scheduleDto.getId(), scheduleDto);
+            }
+            logger.info("Finished processing schedules. Total schedules added: {}", schedules.size());
         }
 
         return schedules;
@@ -80,13 +98,19 @@ public class ScheduleService {
 
     protected boolean isValidForWeekAndSubgroup(JSONObject scheduleJson, int targetWeekNumber, int numSubgroup) {
         JSONArray weekNumbers = scheduleJson.optJSONArray("weekNumber");
-        int subgroup = scheduleJson.optInt("subgroup");
+        int subgroup = scheduleJson.optInt("numSubgroup", 0); // Устанавливаем значение по умолчанию равным 0
 
         boolean isWeekValid = weekNumbers != null && IntStream.range(0, weekNumbers.length()).anyMatch(i -> weekNumbers.getInt(i) == targetWeekNumber);
-        boolean isSubgroupValid = (numSubgroup == 0) || (subgroup == numSubgroup);
+        boolean isSubgroupValid = (numSubgroup == 0 || subgroup == numSubgroup);
+
+        logger.info("Checking validity for week: {}, subgroup: {}. Week numbers in JSON: {}, Subgroup in JSON: {}", targetWeekNumber, numSubgroup, Arrays.toString(IntStream.range(0, weekNumbers.length()).map(weekNumbers::getInt).toArray()), subgroup);
+        logger.info("Week validity: {}, Subgroup validity: {}", isWeekValid, isSubgroupValid);
 
         return isWeekValid && isSubgroupValid;
     }
+
+
+
 
 
     protected Schedule processScheduleData(JSONObject scheduleJson, String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) throws JSONException {
@@ -95,7 +119,7 @@ public class ScheduleService {
         String instructorFullName = extractInstructorFullName(scheduleJson);
         String startTime = scheduleJson.optString("startLessonTime", DEFAULT_VALUE);
         String endTime = scheduleJson.optString("endLessonTime", DEFAULT_VALUE);
-        int actualSubgroup = scheduleJson.optInt("subgroup", 0);
+        int actualSubgroup = scheduleJson.optInt("numSubgroup", 0);
 
         Auditorium auditorium = auditoriumRepository.findByNumber(auditoryName)
                 .orElseGet(() -> auditoriumRepository.save(new Auditorium(auditoryName)));
@@ -158,24 +182,25 @@ public class ScheduleService {
 
     public List<ScheduleDto> convertToDto(List<Schedule> schedules) {
         return schedules.stream()
-                .distinct()
-                .map(schedule -> new ScheduleDto(
-                        schedule.getId(),
-                        new CourseInfoDto(
-                                schedule.getGroup().getName(),
-                                schedule.getAuditorium().getNumber(),
-                                schedule.getSubject().getName(),
-                                schedule.getInstructor().getName()
-                        ),
-                        new ScheduleInfoDto(
-                                schedule.getDayOfWeek(),
-                                schedule.getNumSubgroup(),
-                                schedule.getWeekNumber(),
-                                schedule.getStartTime(),
-                                schedule.getEndTime()
-                        )
-                ))
-                .toList();
+                .map(schedule -> {
+                    CourseInfoDto courseInfo = new CourseInfoDto(
+                            schedule.getGroup().getName(),
+                            schedule.getAuditorium().getNumber(),
+                            schedule.getSubject().getName(),
+                            schedule.getInstructor().getName()
+                    );
+                    ScheduleInfoDto scheduleInfo = new ScheduleInfoDto(
+                            schedule.getDayOfWeek(),
+                            schedule.getNumSubgroup(), // Вот здесь уже есть информация о подгруппе
+                            schedule.getWeekNumber(),
+                            schedule.getStartTime(),
+                            schedule.getEndTime()
+                    );
+
+
+                    return new ScheduleDto(schedule.getId(), courseInfo, scheduleInfo);
+                })
+                .collect(Collectors.toList());
     }
 
 
