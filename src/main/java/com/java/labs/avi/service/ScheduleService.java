@@ -97,11 +97,12 @@ public class ScheduleService {
 
     protected boolean isValidForWeekAndSubgroup(JSONObject scheduleJson, int targetWeekNumber, int numSubgroup) {
         JSONArray weekNumbers = scheduleJson.optJSONArray("weekNumber");
-        int subgroup = scheduleJson.optInt("numSubgroup", 0); // Устанавливаем значение по умолчанию равным 0
+        int subgroup = scheduleJson.optInt("numSubgroup", 0);
 
         boolean isWeekValid = weekNumbers != null && IntStream.range(0, weekNumbers.length()).anyMatch(i -> weekNumbers.getInt(i) == targetWeekNumber);
         boolean isSubgroupValid = (numSubgroup == 0 || subgroup == numSubgroup);
 
+        assert weekNumbers != null;
         logger.info("Checking validity for week: {}, subgroup: {}. Week numbers in JSON: {}, Subgroup in JSON: {}", targetWeekNumber, numSubgroup, Arrays.toString(IntStream.range(0, weekNumbers.length()).map(weekNumbers::getInt).toArray()), subgroup);
         logger.info("Week validity: {}, Subgroup validity: {}", isWeekValid, isSubgroupValid);
 
