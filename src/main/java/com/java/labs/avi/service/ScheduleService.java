@@ -81,15 +81,11 @@ public class ScheduleService {
             }
         }
 
-        if (schedules.isEmpty()) {
-            logger.warn("No schedules matched the criteria for groupNumber: {}, dayOfWeek: {}, targetWeekNumber: {}, numSubgroup: {}", groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
-        } else {
-            for (Schedule schedule : schedules) {
-                ScheduleDto scheduleDto = convertToDto(Arrays.asList(schedule)).get(0);
-                scheduleCache.put(scheduleDto.getId(), scheduleDto);
-            }
-            logger.info("Finished processing schedules. Total schedules added: {}", schedules.size());
+        for (Schedule schedule : schedules) {
+            ScheduleDto scheduleDto = convertToDto(Arrays.asList(schedule)).get(0);
+            scheduleCache.put(scheduleDto.getId(), scheduleDto);
         }
+        logger.info("Finished processing schedules. Total schedules added: {}", schedules.size());
 
         return schedules;
     }
@@ -107,9 +103,6 @@ public class ScheduleService {
 
         return isWeekValid && isSubgroupValid;
     }
-
-
-
 
 
     protected Schedule processScheduleData(JSONObject scheduleJson, String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) throws JSONException {
