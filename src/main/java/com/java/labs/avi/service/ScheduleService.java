@@ -67,7 +67,6 @@ public class ScheduleService {
 
     protected List<Schedule> processSchedules(JSONArray schedulesJson, String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) {
         List<Schedule> schedules = new ArrayList<>();
-        logger.info("Start processing schedules for groupNumber: {}, dayOfWeek: {}, targetWeekNumber: {}, numSubgroup: {}", groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
 
         for (int i = 0; i < schedulesJson.length(); i++) {
             JSONObject scheduleJson = schedulesJson.getJSONObject(i);
