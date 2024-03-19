@@ -3,6 +3,9 @@ package com.java.labs.avi.controller;
 import com.java.labs.avi.dto.ScheduleDto;
 import com.java.labs.avi.model.Schedule;
 import com.java.labs.avi.service.ScheduleService;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,16 +29,14 @@ public class ScheduleController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ScheduleDto>> getScheduleForDayOfWeek(@RequestParam String groupNumber,
-                                                                     @RequestParam String dayOfWeek,
-                                                                     @RequestParam int targetWeekNumber,
-                                                                     @RequestParam int numSubgroup) {
+    public ResponseEntity<List<ScheduleDto>> getScheduleForDayOfWeek(
+            @RequestParam @NotBlank @Pattern(regexp = "\\d+", message = "Group number must be numeric") String groupNumber,
+            @RequestParam @NotBlank String dayOfWeek,
+            @RequestParam @Min(1) int targetWeekNumber,
+            @RequestParam @Min(0) int numSubgroup) {
+
         List<ScheduleDto> scheduleDtos = scheduleService.getScheduleByGroupDayWeekAndSubgroup(groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
-        if (scheduleDtos.isEmpty()) {
-            log.info("No schedules found for the given parameters.");
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(scheduleDtos, HttpStatus.OK);
+        return ResponseEntity.ok(scheduleDtos);
     }
 
     @PostMapping

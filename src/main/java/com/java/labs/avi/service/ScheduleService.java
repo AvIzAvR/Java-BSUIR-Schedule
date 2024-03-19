@@ -48,7 +48,6 @@ public class ScheduleService {
     }
 
     public List<ScheduleDto> getScheduleByGroupDayWeekAndSubgroup(String groupNumber, String dayOfWeek, int targetWeekNumber, int numSubgroup) {
-        logger.info("Fetching schedule for groupNumber: {}, dayOfWeek: {}, targetWeekNumber: {}, numSubgroup: {}", groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
         try {
             String jsonResponse = fetchScheduleJson(groupNumber);
             JSONObject jsonObject = new JSONObject(jsonResponse);
