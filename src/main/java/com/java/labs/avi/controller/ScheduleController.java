@@ -1,6 +1,8 @@
 package com.java.labs.avi.controller;
 
 import com.java.labs.avi.dto.ScheduleDto;
+import com.java.labs.avi.exception.BadRequestException;
+import com.java.labs.avi.exception.GlobalExceptionHandler;
 import com.java.labs.avi.model.Schedule;
 import com.java.labs.avi.service.ScheduleService;
 import jakarta.validation.constraints.Min;
@@ -13,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -35,9 +38,16 @@ public class ScheduleController {
             @RequestParam @Min(1) int targetWeekNumber,
             @RequestParam @Min(0) int numSubgroup) {
 
+        List<String> allowedDaysOfWeek = Arrays.asList("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье");
+
+        if (!allowedDaysOfWeek.contains(dayOfWeek)) {
+            throw new BadRequestException("Day of week is not valid");
+        }
+
         List<ScheduleDto> scheduleDtos = scheduleService.getScheduleByGroupDayWeekAndSubgroup(groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
         return ResponseEntity.ok(scheduleDtos);
     }
+
 
     @PostMapping
     public ResponseEntity<ScheduleDto> createSchedule(@RequestBody ScheduleDto scheduleDto) {
