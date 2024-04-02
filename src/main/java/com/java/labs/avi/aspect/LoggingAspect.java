@@ -21,13 +21,18 @@ public class LoggingAspect {
 
     @Before("springBeanPointcut()")
     public void logBefore(JoinPoint joinPoint) {
-        log.info("Enter: {}.{}() with argument[s] = {}", joinPoint.getSignature().getDeclaringTypeName(),
-                joinPoint.getSignature().getName(), joinPoint.getArgs());
+        log.info(
+                "Enter: {}.{}() with argument[s] = {}",
+                joinPoint.getSignature().getDeclaringTypeName(),
+                joinPoint.getSignature().getName(),
+                joinPoint.getArgs());
     }
 
     @AfterThrowing(pointcut = "springBeanPointcut()", throwing = "e")
     public void logAfterThrowing(JoinPoint joinPoint, Throwable e) {
-        log.error("Exception in {}.{}() with cause = '{}'", joinPoint.getSignature().getDeclaringTypeName(),
-                joinPoint.getSignature().getName(), e.getCause() != null ? e.getCause() : "NULL");
+        log.error("Exception in {}.{}() with cause = '{}'",
+                joinPoint.getSignature().getDeclaringTypeName(),
+                joinPoint.getSignature().getName(),
+                e.getCause() != null ? e.getCause() : "NULL");
     }
 }

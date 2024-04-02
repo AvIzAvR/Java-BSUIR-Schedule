@@ -2,22 +2,31 @@ package com.java.labs.avi.controller;
 
 import com.java.labs.avi.dto.ScheduleDto;
 import com.java.labs.avi.exception.BadRequestException;
-import com.java.labs.avi.exception.GlobalExceptionHandler;
 import com.java.labs.avi.model.Schedule;
 import com.java.labs.avi.service.ScheduleService;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+
 
 @RestController
 @RequestMapping("/schedule")
@@ -33,18 +42,32 @@ public class ScheduleController {
 
     @GetMapping
     public ResponseEntity<List<ScheduleDto>> getScheduleForDayOfWeek(
-            @RequestParam @NotBlank @Pattern(regexp = "\\d+", message = "Group number must be numeric") String groupNumber,
+            @RequestParam @NotBlank @Pattern(
+                    regexp = "\\d+",
+                    message = "Group number must be numeric")
+            String groupNumber,
             @RequestParam @NotBlank String dayOfWeek,
             @RequestParam @Min(1) int targetWeekNumber,
             @RequestParam @Min(0) int numSubgroup) {
 
-        List<String> allowedDaysOfWeek = Arrays.asList("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье");
+        List<String> allowedDaysOfWeek = Arrays.asList(
+                "Понедельник",
+                "Вторник",
+                "Среда",
+                "Четверг",
+                "Пятница",
+                "Суббота",
+                "Воскресенье");
 
         if (!allowedDaysOfWeek.contains(dayOfWeek)) {
             throw new BadRequestException("Day of week is not valid");
         }
 
-        List<ScheduleDto> scheduleDtos = scheduleService.getScheduleByGroupDayWeekAndSubgroup(groupNumber, dayOfWeek, targetWeekNumber, numSubgroup);
+        List<ScheduleDto> scheduleDtos = scheduleService.getScheduleByGroupDayWeekAndSubgroup(
+                groupNumber,
+                dayOfWeek,
+                targetWeekNumber,
+                numSubgroup);
         return ResponseEntity.ok(scheduleDtos);
     }
 
@@ -66,7 +89,8 @@ public class ScheduleController {
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deleteSchedule(@PathVariable Long id) {
         scheduleService.deleteSchedule(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(
+                HttpStatus.NO_CONTENT);
     }
 
     @PatchMapping("/{id}")
