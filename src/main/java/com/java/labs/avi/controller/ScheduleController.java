@@ -31,8 +31,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/schedule")
 public class ScheduleController {
-
-    private static final Logger log = LoggerFactory.getLogger(ScheduleController.class);
     private final ScheduleService scheduleService;
 
     @Autowired

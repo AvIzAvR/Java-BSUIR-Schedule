@@ -42,7 +42,7 @@ public class ScheduleService {
     private final ScheduleCache scheduleCache;
     private static final Logger logger = LoggerFactory.getLogger(ScheduleService.class);
 
-    public static final String notFound = "Schedule not found for this id :: ";
+    public static final String NOTFOUND = "Schedule not found for this id :: ";
     private static final String DEFAULT_VALUE = "не указано";
 
 
@@ -100,8 +100,6 @@ public class ScheduleService {
 
         for (int i = 0; i < schedulesJson.length(); i++) {
             JSONObject scheduleJson = schedulesJson.getJSONObject(i);
-            logger.info("Processing schedule JSON at index {}: {}", i, scheduleJson.toString());
-
             if (isValidForWeekAndSubgroup(scheduleJson, targetWeekNumber, numSubgroup)) {
                 Schedule schedule = processScheduleData(
                         scheduleJson,
@@ -138,14 +136,6 @@ public class ScheduleService {
         boolean isSubgroupValid = (numSubgroup == 0 || subgroup == numSubgroup);
 
         assert weekNumbers != null;
-        logger.info("Checking validity for week: {},"
-                        + " subgroup: {}. Week numbers in JSON: {},"
-                        + " Subgroup in JSON: {}",
-                targetWeekNumber,
-                numSubgroup,
-                Arrays.toString(IntStream.range(
-                        0, weekNumbers.length()).map(weekNumbers::getInt).toArray()),
-                subgroup);
         logger.info("Week validity: {}, Subgroup validity: {}", isWeekValid, isSubgroupValid);
 
         return isWeekValid && isSubgroupValid;
@@ -250,8 +240,7 @@ public class ScheduleService {
 
                     return new ScheduleDto(schedule.getId(), courseInfo, scheduleInfo);
                 })
-                .collect(
-                        Collectors.toList());
+                .toList();
     }
 
 
@@ -270,7 +259,7 @@ public class ScheduleService {
     @Transactional
     public ScheduleDto updateSchedule(Long scheduleId, ScheduleDto scheduleDto) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new RuntimeException(notFound + scheduleId));
+                .orElseThrow(() -> new RuntimeException(NOTFOUND + scheduleId));
 
         Auditorium auditorium = auditoriumRepository
                 .findByNumber(scheduleDto.getCourseInfo().getRoomNumber())
@@ -329,7 +318,7 @@ public class ScheduleService {
 
     public void deleteSchedule(Long id) {
         Schedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(notFound + id));
+                .orElseThrow(() -> new RuntimeException(NOTFOUND + id));
         scheduleRepository.delete(schedule);
         scheduleCache.delete(id);
     }
@@ -337,7 +326,7 @@ public class ScheduleService {
     @Transactional
     public ScheduleDto patchSchedule(Long id, Map<String, Object> updates) {
         Schedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(notFound + id));
+                .orElseThrow(() -> new RuntimeException(NOTFOUND + id));
 
         updates.forEach((key, value) -> {
             if ("startTime".equals(key)) {
