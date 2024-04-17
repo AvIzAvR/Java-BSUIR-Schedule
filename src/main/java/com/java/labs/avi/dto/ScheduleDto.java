@@ -5,6 +5,10 @@ public class ScheduleDto {
     private CourseInfoDto courseInfo;
     private ScheduleInfoDto scheduleInfo;
 
+    public ScheduleDto() {
+
+    }
+
     public Long getId() {
         return id;
     }

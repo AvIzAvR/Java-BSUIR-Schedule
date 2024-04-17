@@ -15,11 +15,8 @@ import com.java.labs.avi.repository.InstructorRepository;
 import com.java.labs.avi.repository.ScheduleRepository;
 import com.java.labs.avi.repository.SubjectRepository;
 import jakarta.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 import java.util.stream.IntStream;
 import org.hibernate.Hibernate;
 import org.json.JSONArray;
@@ -39,11 +36,11 @@ public class ScheduleService {
     private final AuditoriumRepository auditoriumRepository;
     private final RestTemplate restTemplate;
     private final ScheduleCache scheduleCache;
+    private final RequestCounterService requestCounterService;
     private static final Logger logger = LoggerFactory.getLogger(ScheduleService.class);
 
     public static final String NOTFOUND = "Schedule not found for this id :: ";
     private static final String DEFAULT_VALUE = "не указано";
-
 
     public ScheduleService(ScheduleRepository scheduleRepository,
                            SubjectRepository subjectRepository,
@@ -51,7 +48,8 @@ public class ScheduleService {
                            GroupRepository groupRepository,
                            AuditoriumRepository auditoriumRepository,
                            RestTemplate restTemplate,
-                           ScheduleCache scheduleCache) {
+                           ScheduleCache scheduleCache,
+                           RequestCounterService requestCounterService) {
         this.scheduleRepository = scheduleRepository;
         this.subjectRepository = subjectRepository;
         this.instructorRepository = instructorRepository;
@@ -59,21 +57,34 @@ public class ScheduleService {
         this.auditoriumRepository = auditoriumRepository;
         this.restTemplate = restTemplate;
         this.scheduleCache = scheduleCache;
+        this.requestCounterService = requestCounterService;
+    }
+
+    private static final Map<String, String> DAY_OF_WEEK_MAPPING = new HashMap<>();
+    static {
+        DAY_OF_WEEK_MAPPING.put("Monday", "Понедельник");
+        DAY_OF_WEEK_MAPPING.put("Tuesday", "Вторник");
+        DAY_OF_WEEK_MAPPING.put("Wednesday", "Среда");
+        DAY_OF_WEEK_MAPPING.put("Thursday", "Четверг");
+        DAY_OF_WEEK_MAPPING.put("Friday", "Пятница");
+        DAY_OF_WEEK_MAPPING.put("Saturday", "Суббота");
     }
 
     public List<ScheduleDto> getScheduleByGroupDayWeekAndSubgroup(
             String groupNumber,
-            String dayOfWeek,
+            String dayOfWeekEnglish,
             int targetWeekNumber,
             int numSubgroup) {
         try {
+            String dayOfWeekRussian = DAY_OF_WEEK_MAPPING.getOrDefault(dayOfWeekEnglish, dayOfWeekEnglish);
+            requestCounterService.incrementCount();
             String jsonResponse = fetchScheduleJson(groupNumber);
             JSONObject jsonObject = new JSONObject(jsonResponse);
-            JSONArray daySchedules = jsonObject.getJSONObject("schedules").getJSONArray(dayOfWeek);
+            JSONArray daySchedules = jsonObject.getJSONObject("schedules").getJSONArray(dayOfWeekRussian);
             List<Schedule> processedSchedules = processSchedules(
                     daySchedules,
                     groupNumber,
-                    dayOfWeek,
+                    dayOfWeekRussian,
                     targetWeekNumber,
                     numSubgroup);
             return convertToDto(processedSchedules);
@@ -83,19 +94,19 @@ public class ScheduleService {
         }
     }
 
-    private String fetchScheduleJson(
+    String fetchScheduleJson(
             String groupNumber) {
         String url = "https://iis.bsuir.by/api/v1/schedule?studentGroup=" + groupNumber;
         return restTemplate.getForObject(url, String.class);
     }
 
-    protected List<Schedule> processSchedules(
+    public List<Schedule> processSchedules(
             JSONArray schedulesJson,
             String groupNumber,
             String dayOfWeek,
             int targetWeekNumber,
             int numSubgroup) {
-        List<Schedule> schedules = new ArrayList<>();
+        List<Schedule> processedSchedules = new ArrayList<>();
 
         for (int i = 0; i < schedulesJson.length(); i++) {
             JSONObject scheduleJson = schedulesJson.getJSONObject(i);
@@ -106,23 +117,19 @@ public class ScheduleService {
                         dayOfWeek,
                         targetWeekNumber,
                         numSubgroup);
-                schedules.add(schedule);
-                logger.info("Added schedule for " + ": {}", numSubgroup);
-            } else {
-                logger.info("Schedule at index {} does not match the criteria.", i);
+                processedSchedules.add(schedule);
+                ScheduleDto scheduleDto = convertToDto(Arrays.asList(schedule)).get(0);
+                scheduleCache.put(scheduleDto.getId(), scheduleDto);
             }
         }
 
-        for (Schedule schedule : schedules) {
-            ScheduleDto scheduleDto = convertToDto(Arrays.asList(schedule)).get(0);
-            scheduleCache.put(scheduleDto.getId(), scheduleDto);
-        }
-        logger.info("Finished processing schedules. Total schedules added: {}", schedules.size());
+        logger.info("Finished processing schedules. Total schedules added: {}", processedSchedules.size());
 
-        return schedules;
+        return processedSchedules;
     }
 
-    protected boolean isValidForWeekAndSubgroup(
+
+    public boolean isValidForWeekAndSubgroup(
             JSONObject scheduleJson,
             int targetWeekNumber,
             int numSubgroup) {
@@ -141,13 +148,14 @@ public class ScheduleService {
     }
 
 
-    protected Schedule processScheduleData(JSONObject scheduleJson,
-                                           String groupNumber,
-                                           String dayOfWeek,
-                                           int targetWeekNumber,
-                                           int numSubgroup) throws JSONException {
+    public Schedule processScheduleData(JSONObject scheduleJson,
+                                        String groupNumber,
+                                        String dayOfWeek,
+                                        int targetWeekNumber,
+                                        int numSubgroup) throws JSONException {
         String subjectName = scheduleJson.optString("subjectFullName", DEFAULT_VALUE);
-        String auditoryName = scheduleJson.optJSONArray("auditories").optString(0, DEFAULT_VALUE);
+        JSONArray auditories = scheduleJson.optJSONArray("auditories");
+        String auditoryName = (auditories != null && !auditories.isEmpty()) ? auditories.optString(0, DEFAULT_VALUE) : DEFAULT_VALUE;
         String instructorFullName = extractInstructorFullName(scheduleJson);
         String startTime = scheduleJson.optString("startLessonTime", DEFAULT_VALUE);
         String endTime = scheduleJson.optString("endLessonTime", DEFAULT_VALUE);
@@ -203,11 +211,12 @@ public class ScheduleService {
             newSchedule.setEndTime(endTime);
 
             Hibernate.initialize(newSchedule.getInstructor().getSubjects());
-            return scheduleRepository.save(newSchedule);
+            newSchedule = scheduleRepository.save(newSchedule);
+            return newSchedule;
         }
     }
 
-    private String extractInstructorFullName(JSONObject scheduleJson) throws JSONException {
+    String extractInstructorFullName(JSONObject scheduleJson) throws JSONException {
         JSONArray employees = scheduleJson.optJSONArray("employees");
         if (employees != null && !employees.isEmpty()) {
             JSONObject instructorJson = employees.getJSONObject(0);
@@ -316,11 +325,10 @@ public class ScheduleService {
 
 
     public void deleteSchedule(Long id) {
-        Schedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(NOTFOUND + id));
-        scheduleRepository.delete(schedule);
+        scheduleRepository.deleteById(id);
         scheduleCache.delete(id);
     }
+
 
     @Transactional
     public ScheduleDto patchSchedule(Long id, Map<String, Object> updates) {
@@ -385,27 +393,23 @@ public class ScheduleService {
 
         Auditorium auditorium = auditoriumRepository
                 .findByNumber(scheduleDto.getCourseInfo().getRoomNumber())
-                .orElseGet(() -> auditoriumRepository.save(
-                        new Auditorium(
-                                scheduleDto.getCourseInfo().getRoomNumber())));
+                .orElseGet(() -> auditoriumRepository.save(new Auditorium(scheduleDto.getCourseInfo().getRoomNumber())));
 
         Group group = groupRepository
                 .findByName(scheduleDto.getCourseInfo().getClassGroup())
-                .orElseGet(() -> groupRepository.save(
-                        new Group(
-                                scheduleDto.getCourseInfo().getClassGroup())));
+                .orElseGet(() -> {
+                    Group newGroup = new Group(scheduleDto.getCourseInfo().getClassGroup());
+                    newGroup.setAuditorium(auditorium);
+                    return groupRepository.save(newGroup);
+                });
 
         Instructor instructor = instructorRepository
                 .findByName(scheduleDto.getCourseInfo().getLecturer())
-                .orElseGet(() -> instructorRepository.save(
-                        new Instructor(
-                                scheduleDto.getCourseInfo().getLecturer())));
+                .orElseGet(() -> instructorRepository.save(new Instructor(scheduleDto.getCourseInfo().getLecturer())));
 
         Subject subject = subjectRepository
                 .findByName(scheduleDto.getCourseInfo().getCourseTitle())
-                .orElseGet(() -> subjectRepository.save(
-                        new Subject(
-                                scheduleDto.getCourseInfo().getCourseTitle())));
+                .orElseGet(() -> subjectRepository.save(new Subject(scheduleDto.getCourseInfo().getCourseTitle())));
 
         schedule.setAuditorium(auditorium);
         schedule.setGroup(group);
@@ -423,6 +427,13 @@ public class ScheduleService {
 
         return schedule;
     }
+
+
+    @Transactional
+    public List<Schedule> saveAll(List<Schedule> schedules) {
+        return scheduleRepository.saveAll(schedules);
+    }
+
 
 }
 
