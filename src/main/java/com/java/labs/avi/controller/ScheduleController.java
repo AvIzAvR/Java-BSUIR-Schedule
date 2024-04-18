@@ -99,17 +99,17 @@ public class ScheduleController {
         return ResponseEntity.ok(updatedScheduleDto);
     }
 
+    @PatchMapping("/{id}")
+    public ResponseEntity<ScheduleDto> patchSchedule(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
+        ScheduleDto updatedScheduleDto = scheduleService.patchSchedule(id, updates);
+        return ResponseEntity.ok(updatedScheduleDto);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deleteSchedule(@PathVariable Long id) {
         scheduleService.deleteSchedule(id);
         return new ResponseEntity<>(
                 HttpStatus.NO_CONTENT);
-    }
-
-    @PatchMapping("/{id}")
-    public ResponseEntity<ScheduleDto> patchSchedule(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
-        ScheduleDto updatedScheduleDto = scheduleService.patchSchedule(id, updates);
-        return ResponseEntity.ok(updatedScheduleDto);
     }
 
     @DeleteMapping("/auditorium/{id}")
