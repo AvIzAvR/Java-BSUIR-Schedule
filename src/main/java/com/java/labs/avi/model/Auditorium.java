@@ -24,7 +24,7 @@ public class Auditorium {
     }
 
     @OneToMany(mappedBy = "auditorium")
-    private Set<Group> groups = new HashSet<>();
+    private Set<Group> groups_table = new HashSet<>();
 
     public Long getId() {
         return id;

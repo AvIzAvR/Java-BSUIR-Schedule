@@ -194,7 +194,7 @@ public class ScheduleService {
 
         List<Schedule> existingSchedules =
                 scheduleRepository
-                        .findScheduleByCriteria(
+                        .findByCriteria(
                 groupNumber,
                 dayOfWeek,
                 targetWeekNumber,
