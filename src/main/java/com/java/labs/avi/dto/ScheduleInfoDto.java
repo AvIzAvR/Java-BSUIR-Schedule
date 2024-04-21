@@ -47,7 +47,11 @@ public class ScheduleInfoDto {
         this.sessionEnd = sessionEnd;
     }
 
-    public ScheduleInfoDto(String weekday, int subgroupIndex, int weekOrdinal, String sessionStart, String sessionEnd) {
+    public ScheduleInfoDto(String weekday,
+                           int subgroupIndex,
+                           int weekOrdinal,
+                           String sessionStart,
+                           String sessionEnd) {
         this.weekday = weekday;
         this.subgroupIndex = subgroupIndex;
         this.weekOrdinal = weekOrdinal;

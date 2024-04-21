@@ -3,8 +3,8 @@ package com.java.labs.avi.controller;
 import com.java.labs.avi.dto.ScheduleDto;
 import com.java.labs.avi.exception.BadRequestException;
 import com.java.labs.avi.model.Schedule;
-import com.java.labs.avi.service.ScheduleService;
 import com.java.labs.avi.service.RequestCounterService;
+import com.java.labs.avi.service.ScheduleService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -12,7 +12,6 @@ import jakarta.validation.constraints.Pattern;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,10 +35,13 @@ public class ScheduleController {
     private final RequestCounterService requestCounterService;
 
     @Autowired
-    public ScheduleController(ScheduleService scheduleService, RequestCounterService requestCounterService) {
+    public ScheduleController(
+            ScheduleService scheduleService,
+            RequestCounterService requestCounterService) {
         this.scheduleService = scheduleService;
         this.requestCounterService = requestCounterService;
     }
+
     @GetMapping
     public ResponseEntity<List<ScheduleDto>> getScheduleForDayOfWeek(
             @RequestParam @NotBlank @Pattern(
@@ -69,8 +71,10 @@ public class ScheduleController {
                 numSubgroup);
         return ResponseEntity.ok(scheduleDtos);
     }
+
     @PostMapping("/bulk")
-    public ResponseEntity<List<ScheduleDto>> createOrUpdateSchedules(@Valid @RequestBody List<ScheduleDto> scheduleDtos) {
+    public ResponseEntity<List<ScheduleDto>> createOrUpdateSchedules(
+            @Valid @RequestBody List<ScheduleDto> scheduleDtos) {
         List<Schedule> schedules = scheduleDtos.stream()
                 .map(scheduleService::convertToEntity)
                 .toList();
@@ -92,15 +96,19 @@ public class ScheduleController {
     }
 
 
-
     @PutMapping("/{id}")
-    public ResponseEntity<ScheduleDto> updateSchedule(@PathVariable Long id, @RequestBody ScheduleDto scheduleDetails) {
+    public ResponseEntity<ScheduleDto> updateSchedule(
+            @PathVariable Long id,
+            @RequestBody ScheduleDto scheduleDetails) {
         ScheduleDto updatedScheduleDto = scheduleService.updateSchedule(id, scheduleDetails);
         return ResponseEntity.ok(updatedScheduleDto);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<ScheduleDto> patchSchedule(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
+    public ResponseEntity<ScheduleDto> patchSchedule(
+            @PathVariable Long id,
+            @RequestBody Map<String,
+                    Object> updates) {
         ScheduleDto updatedScheduleDto = scheduleService.patchSchedule(id, updates);
         return ResponseEntity.ok(updatedScheduleDto);
     }

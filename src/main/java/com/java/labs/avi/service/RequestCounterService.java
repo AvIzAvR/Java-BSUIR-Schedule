@@ -1,8 +1,7 @@
 package com.java.labs.avi.service;
 
-import org.springframework.stereotype.Service;
-
 import java.util.concurrent.atomic.AtomicLong;
+import org.springframework.stereotype.Service;
 
 @Service
 public class RequestCounterService {

@@ -15,7 +15,6 @@ import com.java.labs.avi.repository.InstructorRepository;
 import com.java.labs.avi.repository.ScheduleRepository;
 import com.java.labs.avi.repository.SubjectRepository;
 import jakarta.transaction.Transactional;
-
 import java.util.*;
 import java.util.stream.IntStream;
 import org.hibernate.Hibernate;
@@ -61,6 +60,7 @@ public class ScheduleService {
     }
 
     private static final Map<String, String> DAY_OF_WEEK_MAPPING = new HashMap<>();
+
     static {
         DAY_OF_WEEK_MAPPING.put("Monday", "Понедельник");
         DAY_OF_WEEK_MAPPING.put("Tuesday", "Вторник");
@@ -76,11 +76,14 @@ public class ScheduleService {
             int targetWeekNumber,
             int numSubgroup) {
         try {
-            String dayOfWeekRussian = DAY_OF_WEEK_MAPPING.getOrDefault(dayOfWeekEnglish, dayOfWeekEnglish);
+            String dayOfWeekRussian = DAY_OF_WEEK_MAPPING.getOrDefault(
+                    dayOfWeekEnglish,
+                    dayOfWeekEnglish);
             requestCounterService.incrementCount();
             String jsonResponse = fetchScheduleJson(groupNumber);
             JSONObject jsonObject = new JSONObject(jsonResponse);
-            JSONArray daySchedules = jsonObject.getJSONObject("schedules").getJSONArray(dayOfWeekRussian);
+            JSONArray daySchedules = jsonObject.getJSONObject("schedules")
+                    .getJSONArray(dayOfWeekRussian);
             List<Schedule> processedSchedules = processSchedules(
                     daySchedules,
                     groupNumber,
@@ -123,7 +126,8 @@ public class ScheduleService {
             }
         }
 
-        logger.info("Finished processing schedules. Total schedules added: {}", processedSchedules.size());
+        logger.info("Finished processing schedules. Total schedules added: {}",
+                processedSchedules.size());
 
         return processedSchedules;
     }
@@ -155,7 +159,8 @@ public class ScheduleService {
                                         int numSubgroup) throws JSONException {
         String subjectName = scheduleJson.optString("subjectFullName", DEFAULT_VALUE);
         JSONArray auditories = scheduleJson.optJSONArray("auditories");
-        String auditoryName = (auditories != null && !auditories.isEmpty()) ? auditories.optString(0, DEFAULT_VALUE) : DEFAULT_VALUE;
+        String auditoryName = (auditories != null && !auditories.isEmpty()) ? auditories
+                .optString(0, DEFAULT_VALUE) : DEFAULT_VALUE;
         String instructorFullName = extractInstructorFullName(scheduleJson);
         String startTime = scheduleJson.optString("startLessonTime", DEFAULT_VALUE);
         String endTime = scheduleJson.optString("endLessonTime", DEFAULT_VALUE);
@@ -188,7 +193,8 @@ public class ScheduleService {
         }
 
         List<Schedule> existingSchedules =
-                scheduleRepository.findByGroupNameAndDayOfWeekAndWeekNumberAndNumSubgroupAndStartTimeAndEndTime(
+                scheduleRepository
+                        .findScheduleByCriteria(
                 groupNumber,
                 dayOfWeek,
                 targetWeekNumber,
@@ -393,7 +399,8 @@ public class ScheduleService {
 
         Auditorium auditorium = auditoriumRepository
                 .findByNumber(scheduleDto.getCourseInfo().getRoomNumber())
-                .orElseGet(() -> auditoriumRepository.save(new Auditorium(scheduleDto.getCourseInfo().getRoomNumber())));
+                .orElseGet(() -> auditoriumRepository.save(new Auditorium(scheduleDto
+                        .getCourseInfo().getRoomNumber())));
 
         Group group = groupRepository
                 .findByName(scheduleDto.getCourseInfo().getClassGroup())
@@ -405,11 +412,13 @@ public class ScheduleService {
 
         Instructor instructor = instructorRepository
                 .findByName(scheduleDto.getCourseInfo().getLecturer())
-                .orElseGet(() -> instructorRepository.save(new Instructor(scheduleDto.getCourseInfo().getLecturer())));
+                .orElseGet(() -> instructorRepository
+                        .save(new Instructor(scheduleDto.getCourseInfo().getLecturer())));
 
         Subject subject = subjectRepository
                 .findByName(scheduleDto.getCourseInfo().getCourseTitle())
-                .orElseGet(() -> subjectRepository.save(new Subject(scheduleDto.getCourseInfo().getCourseTitle())));
+                .orElseGet(() -> subjectRepository
+                        .save(new Subject(scheduleDto.getCourseInfo().getCourseTitle())));
 
         schedule.setAuditorium(auditorium);
         schedule.setGroup(group);

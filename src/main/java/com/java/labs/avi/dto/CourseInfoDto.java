@@ -38,7 +38,10 @@ public class CourseInfoDto {
         this.lecturer = lecturer;
     }
 
-    public CourseInfoDto(String classGroup, String roomNumber, String courseTitle, String lecturer) {
+    public CourseInfoDto(String classGroup,
+                         String roomNumber,
+                         String courseTitle,
+                         String lecturer) {
         this.classGroup = classGroup;
         this.roomNumber = roomNumber;
         this.courseTitle = courseTitle;

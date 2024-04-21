@@ -19,7 +19,14 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("weekNumber") int weekNumber,
             @Param("numSubgroup") int numSubgroup);
 
-    List<Schedule> findByGroupNameAndDayOfWeekAndWeekNumberAndNumSubgroupAndStartTimeAndEndTime(
+    @Query(value = "SELECT s FROM Schedule s "
+            + "JOIN groups g ON s.group_id = g.id WHERE g.name = :groupName "
+            + "AND s.dayOfWeek = :dayOfWeek "
+            + "AND s.weekNumber = :weekNumber "
+            + "AND s.numSubgroup = :numSubgroup "
+            + "AND s.startTime = :startTime "
+            + "AND s.endTime = :endTime", nativeQuery = true)
+    List<Schedule> findScheduleByCriteria(
             String groupName,
             String dayOfWeek,
             int weekNumber,
