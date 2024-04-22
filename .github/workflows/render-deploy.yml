@@ -1,4 +1,4 @@
-name: Render Spring POC hook example
+name: Render Spring POC hook
 
 on:
   push:
@@ -23,8 +23,10 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           tasks: build
-          java-home: ${{ env.JAVA_HOME_17_X64 }}
+          java-home: ${{ env.JAVA_HOME }}
           publish-atoms: false
 
       - name: Trigger Render deploy hook
-        run: curl ${{secrets.RENDER_API_KEY}}
+        run: curl -X POST -d '{}' https://api.render.com/deploy/srv-coilasf79t8c738j2pv0?key=qUGjTS3Bnqo
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
