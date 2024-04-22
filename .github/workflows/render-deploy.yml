@@ -27,4 +27,4 @@ jobs:
           publish-atoms: false
 
       - name: Trigger Render deploy hook
-        run: curl ${{secrets.RENDER_DEPLOY_HOOK}}
+        run: curl ${{secrets.RENDER_API_KEY}}
