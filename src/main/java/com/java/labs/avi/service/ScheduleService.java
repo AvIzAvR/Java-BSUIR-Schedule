@@ -281,7 +281,7 @@ public class ScheduleService {
                 .orElseGet(() -> auditoriumRepository.save(
                         new Auditorium(scheduleDto.getCourseInfo().getRoomNumber())));
 
-        logger.info("Searching for auditorium with number: {}", scheduleDto.getCourseInfo().getRoomNumber());
+        logger.info("Searching for group with number: {}", scheduleDto.getCourseInfo().getRoomNumber());
         Group group = groupRepository
                 .findByName(scheduleDto.getCourseInfo().getClassGroup())
                 .orElseGet(() -> {
@@ -291,14 +291,14 @@ public class ScheduleService {
                     return groupRepository.save(newGroup);
                 });
 
-        logger.info("Searching for auditorium with number: {}", scheduleDto.getCourseInfo().getRoomNumber());
+        logger.info("Searching for subject with number: {}", scheduleDto.getCourseInfo().getRoomNumber());
         Subject subject = subjectRepository
                 .findByName(scheduleDto.getCourseInfo().getCourseTitle())
                 .orElseGet(() -> subjectRepository.save(
                         new Subject(
                                 scheduleDto.getCourseInfo().getCourseTitle())));
 
-        logger.info("Searching for auditorium with number: {}", scheduleDto.getCourseInfo().getRoomNumber());
+        logger.info("Searching for instructor with number: {}", scheduleDto.getCourseInfo().getRoomNumber());
         Instructor instructor = instructorRepository
                 .findByName(scheduleDto.getCourseInfo().getLecturer())
                 .orElseGet(() -> instructorRepository.save(
