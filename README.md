@@ -22,8 +22,8 @@ The project is organized into several key packages, each serving a specific purp
 
 ## How to Run the Project
 
-1. Clone the repository: `git clone https://github.com/your-username/JavaLab.git`
-2. Navigate to the project directory: `cd JavaLab`
+1. Clone the repository: `git clone https://github.com/AvIzAvR/Java-BSUIR-Schedule.git`
+2. Navigate to the project directory: `cd Java-BSUIR-Schedule`
 3. Build the project: `mvn clean install`
 4. Run the application: `mvn spring-boot:run`
 
