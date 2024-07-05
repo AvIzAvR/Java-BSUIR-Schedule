@@ -1,7 +1,5 @@
 # BSUIR Schedule Project
 
-[![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=AvIzAvR_JavaLabs)](https://sonarcloud.io/summary/new_code?id=AvIzAvR_JavaLabs)
-
 This project is designed to manage and retrieve schedules for students, focusing on daily and weekly schedules. It interfaces with an external API to fetch schedule data, then parses and presents this information based on group numbers, days of the week, week numbers, and subgroup numbers. The application is built with Spring Boot and utilizes RestTemplate for API communication.
 
 ## Project Structure
