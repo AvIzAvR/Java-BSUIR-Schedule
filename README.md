@@ -37,4 +37,4 @@ After starting the application, it will be accessible for API requests.
 
 ```bash
 # Retrieve schedule for a specific day, week, and subgroup
-curl "localhost:8080/schedule?groupNumber=250505&dayOfWeek=Суббота&targetWeekNumber=2&numSubgroup=0"
+curl "localhost:8080/schedule?groupNumber=250505&dayOfWeek=Sunday&targetWeekNumber=2&numSubgroup=0"
